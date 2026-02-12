@@ -1,0 +1,30 @@
+# Game Server Node Configuration
+
+# Node Identification
+node_id: "node-1"
+node_name: "Game Node 1"
+
+# Controller Connection
+controller_address: "localhost:50051"
+grpc_address: "0.0.0.0:50051"
+heartbeat_interval: 30
+node_timeout: 120
+
+# Server Configuration
+server_directory: "./servers"
+max_servers: 10
+default_max_players: 32
+backup_directory: "./backups"
+
+# Resources (auto-detected if not set)
+total_cpu_cores: 4
+total_memory_mb: 8192
+total_storage_mb: 102400
+
+# Logging
+log_level: "info"
+log_format: "json"
+log_file_path: "./logs/node.log"
+
+# Environment
+environment: "development"

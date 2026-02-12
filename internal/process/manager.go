@@ -337,7 +337,7 @@ func (m *Manager) stopProcess(server *ServerProcess) error {
 
 // saveConfig saves the server configuration
 func (m *Manager) saveConfig(serverPath string, config *ServerConfig) error {
-	configPath := filepath.Join(serverPath, "config.json")
 	// TODO: Save config to file
+	_ = filepath.Join(serverPath, "config.json")
 	return nil
 }

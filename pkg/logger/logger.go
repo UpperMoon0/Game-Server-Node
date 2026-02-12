@@ -1,32 +1,28 @@
 package logger
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-// New creates a new logger instance
-func New(logLevel string, logFormat string, logFilePath string) (*zap.Logger, error) {
+// NewFromConfig creates a new logger from configuration
+func NewFromConfig(level string, format string, filePath string) (*zap.Logger, error) {
 	// Parse log level
-	var level zapcore.Level
-	switch logLevel {
+	var zapLevel zapcore.Level
+	switch level {
 	case "debug":
-		level = zapcore.DebugLevel
+		zapLevel = zapcore.DebugLevel
 	case "info":
-		level = zapcore.InfoLevel
+		zapLevel = zapcore.InfoLevel
 	case "warn", "warning":
-		level = zapcore.WarnLevel
+		zapLevel = zapcore.WarnLevel
 	case "error":
-		level = zapcore.ErrorLevel
-	case "fatal":
-		level = zapcore.FatalLevel
+		zapLevel = zapcore.ErrorLevel
 	default:
-		level = zapcore.InfoLevel
+		zapLevel = zapcore.InfoLevel
 	}
 
 	// Create encoder config
@@ -35,49 +31,54 @@ func New(logLevel string, logFormat string, logFilePath string) (*zap.Logger, er
 		LevelKey:       "level",
 		NameKey:        "logger",
 		CallerKey:      "caller",
+		FunctionKey:    zapcore.OmitKey,
 		MessageKey:     "msg",
-		StacktraceKey: "stacktrace",
+		StacktraceKey:  "stacktrace",
 		LineEnding:     zapcore.DefaultLineEnding,
 		EncodeLevel:    zapcore.LowercaseLevelEncoder,
 		EncodeTime:     zapcore.ISO8601TimeEncoder,
-		EncodeDuration: zapcore.SecondsDurationEncoder,
+		EncodeDuration: zapcore.StringDurationEncoder,
 		EncodeCaller:   zapcore.ShortCallerEncoder,
 	}
 
 	// Create encoder
 	var encoder zapcore.Encoder
-	if logFormat == "console" {
-		encoder = zapcore.NewConsoleEncoder(encoderConfig)
-	} else {
+	if format == "json" {
 		encoder = zapcore.NewJSONEncoder(encoderConfig)
+	} else {
+		encoder = zapcore.NewConsoleEncoder(encoderConfig)
 	}
 
-	// Create cores
+	// Create core
 	var cores []zapcore.Core
 
-	// Console output
-	consoleCore := zapcore.NewCore(encoder, zapcore.AddSync(os.Stdout), level)
+	// Add console output
+	consoleCore := zapcore.NewCore(encoder, zapcore.AddSync(os.Stdout), zapLevel)
 	cores = append(cores, consoleCore)
 
-	// File output if path specified
-	if logFilePath != "" {
-		logDir := filepath.Dir(logFilePath)
-		if err := os.MkdirAll(logDir, 0755); err != nil {
+	// Add file output if path is specified
+	if filePath != "" {
+		// Ensure directory exists
+		dir := filepath.Dir(filePath)
+		if err := os.MkdirAll(dir, 0755); err != nil {
 			return nil, err
 		}
 
-		currentTime := time.Now().Format("2006-01-02")
-		filePath := filepath.Join(logDir, fmt.Sprintf("%s-%s.log", filepath.Base(logFilePath), currentTime))
-		
-		file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		// Create log file
+		file, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 		if err != nil {
 			return nil, err
 		}
 
-		fileCore := zapcore.NewCore(encoder, zapcore.AddSync(file), level)
+		fileCore := zapcore.NewCore(encoder, zapcore.AddSync(file), zapLevel)
 		cores = append(cores, fileCore)
 	}
 
-	core := zapcore.NewTee(cores...)
-	return zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1)), nil
+	// Create logger
+	logger := zap.New(zapcore.NewTee(cores...),
+		zap.AddCaller(),
+		zap.AddStacktrace(zapcore.ErrorLevel),
+	)
+
+	return logger, nil
 }

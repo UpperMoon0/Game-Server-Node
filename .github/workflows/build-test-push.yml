@@ -4,7 +4,7 @@ on:
   push:
     branches: ['**']
   pull_request:
-    branches: [main, dev]
+    branches: ['**']
 
 jobs:
   build-test-push:
@@ -35,9 +35,28 @@ jobs:
           go-version: '1.21'
           cache: true
 
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Tidy dependencies
+        run: go mod tidy
+
+      - name: Build
+        run: go build -v ./...
+
       - name: Run tests
         run: |
           go test ./...
+
+      - name: Run vet
+        run: go vet ./...
+
+      - name: Run linter
+        run: |
+          if [ -f go.mod ]; then
+            go install golang.org/x/lint/golint@latest
+            $(go env GOPATH)/bin/golint ./...
+          fi
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

@@ -9,7 +9,6 @@ package proto
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	sync "sync"
 )
 
 const (
@@ -195,11 +194,7 @@ func (x *RegisterNodeRequest) String() string {
 func (*RegisterNodeRequest) ProtoMessage() {}
 
 func (x *RegisterNodeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[0]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // RegisterNodeResponse represents the response from node registration
@@ -223,11 +218,7 @@ func (x *RegisterNodeResponse) String() string {
 func (*RegisterNodeResponse) ProtoMessage() {}
 
 func (x *RegisterNodeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[1]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // NodeResources represents resources available on a node
@@ -255,11 +246,7 @@ func (x *NodeResources) String() string {
 func (*NodeResources) ProtoMessage() {}
 
 func (x *NodeResources) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[2]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // NodeEvent represents an event from a node
@@ -288,11 +275,7 @@ func (x *NodeEvent) String() string {
 func (*NodeEvent) ProtoMessage() {}
 
 func (x *NodeEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[3]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // ControllerCommand represents a command from the controller
@@ -334,11 +317,7 @@ func (x *ControllerCommand) String() string {
 func (*ControllerCommand) ProtoMessage() {}
 
 func (x *ControllerCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[4]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // GetInitializeNode returns the InitializeNode command if present
@@ -497,11 +476,7 @@ func (x *InitializeNodeCmd) String() string {
 func (*InitializeNodeCmd) ProtoMessage() {}
 
 func (x *InitializeNodeCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[5]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // CreateServerCmd contains parameters for creating a server
@@ -526,11 +501,7 @@ func (x *CreateServerCmd) String() string {
 func (*CreateServerCmd) ProtoMessage() {}
 
 func (x *CreateServerCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[6]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // StartServerCmd contains parameters for starting a server
@@ -553,11 +524,7 @@ func (x *StartServerCmd) String() string {
 func (*StartServerCmd) ProtoMessage() {}
 
 func (x *StartServerCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[7]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // StopServerCmd contains parameters for stopping a server
@@ -580,11 +547,7 @@ func (x *StopServerCmd) String() string {
 func (*StopServerCmd) ProtoMessage() {}
 
 func (x *StopServerCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[8]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // DeleteServerCmd contains parameters for deleting a server
@@ -607,11 +570,7 @@ func (x *DeleteServerCmd) String() string {
 func (*DeleteServerCmd) ProtoMessage() {}
 
 func (x *DeleteServerCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[9]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // ServerConfig contains configuration for a game server
@@ -637,11 +596,7 @@ func (x *ServerConfig) String() string {
 func (*ServerConfig) ProtoMessage() {}
 
 func (x *ServerConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[10]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // ServerStatus represents the status of a game server
@@ -665,11 +620,7 @@ func (x *ServerStatus) String() string {
 func (*ServerStatus) ProtoMessage() {}
 
 func (x *ServerStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[11]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // MetricsSnapshot represents a snapshot of node metrics
@@ -695,11 +646,7 @@ func (x *MetricsSnapshot) String() string {
 func (*MetricsSnapshot) ProtoMessage() {}
 
 func (x *MetricsSnapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[12]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // File Commands
@@ -725,11 +672,7 @@ func (x *FileListCmd) String() string {
 func (*FileListCmd) ProtoMessage() {}
 
 func (x *FileListCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[13]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // FileCreateCmd contains parameters for creating a file
@@ -753,11 +696,7 @@ func (x *FileCreateCmd) String() string {
 func (*FileCreateCmd) ProtoMessage() {}
 
 func (x *FileCreateCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[14]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // FileDeleteCmd contains parameters for deleting a file
@@ -781,11 +720,7 @@ func (x *FileDeleteCmd) String() string {
 func (*FileDeleteCmd) ProtoMessage() {}
 
 func (x *FileDeleteCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[15]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // FileRenameCmd contains parameters for renaming a file
@@ -809,11 +744,7 @@ func (x *FileRenameCmd) String() string {
 func (*FileRenameCmd) ProtoMessage() {}
 
 func (x *FileRenameCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[16]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // FileMoveCmd contains parameters for moving a file
@@ -837,11 +768,7 @@ func (x *FileMoveCmd) String() string {
 func (*FileMoveCmd) ProtoMessage() {}
 
 func (x *FileMoveCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[17]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // FileCopyCmd contains parameters for copying a file
@@ -866,11 +793,7 @@ func (x *FileCopyCmd) String() string {
 func (*FileCopyCmd) ProtoMessage() {}
 
 func (x *FileCopyCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[18]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // FileWriteCmd contains parameters for writing a file
@@ -895,11 +818,7 @@ func (x *FileWriteCmd) String() string {
 func (*FileWriteCmd) ProtoMessage() {}
 
 func (x *FileWriteCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[19]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // FileReadCmd contains parameters for reading a file
@@ -924,11 +843,7 @@ func (x *FileReadCmd) String() string {
 func (*FileReadCmd) ProtoMessage() {}
 
 func (x *FileReadCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[20]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // FileZipCmd contains parameters for zipping files
@@ -953,11 +868,7 @@ func (x *FileZipCmd) String() string {
 func (*FileZipCmd) ProtoMessage() {}
 
 func (x *FileZipCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[21]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // FileUnzipCmd contains parameters for unzipping files
@@ -981,11 +892,7 @@ func (x *FileUnzipCmd) String() string {
 func (*FileUnzipCmd) ProtoMessage() {}
 
 func (x *FileUnzipCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[22]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // FileExistsCmd contains parameters for checking file existence
@@ -1008,11 +915,7 @@ func (x *FileExistsCmd) String() string {
 func (*FileExistsCmd) ProtoMessage() {}
 
 func (x *FileExistsCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[23]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // FileMkdirCmd contains parameters for creating a directory
@@ -1036,11 +939,7 @@ func (x *FileMkdirCmd) String() string {
 func (*FileMkdirCmd) ProtoMessage() {}
 
 func (x *FileMkdirCmd) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[24]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // FileInfo represents information about a file
@@ -1069,11 +968,7 @@ func (x *FileInfo) String() string {
 func (*FileInfo) ProtoMessage() {}
 
 func (x *FileInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[25]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // FileOpResult represents the result of a file operation
@@ -1101,11 +996,7 @@ func (x *FileOpResult) String() string {
 func (*FileOpResult) ProtoMessage() {}
 
 func (x *FileOpResult) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[26]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // FileListResult contains the result of a file list operation
@@ -1129,11 +1020,7 @@ func (x *FileListResult) String() string {
 func (*FileListResult) ProtoMessage() {}
 
 func (x *FileListResult) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[27]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // FileReadResult contains the result of a file read operation
@@ -1157,11 +1044,7 @@ func (x *FileReadResult) String() string {
 func (*FileReadResult) ProtoMessage() {}
 
 func (x *FileReadResult) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[28]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // FileExistsResult contains the result of a file exists check
@@ -1185,11 +1068,7 @@ func (x *FileExistsResult) String() string {
 func (*FileExistsResult) ProtoMessage() {}
 
 func (x *FileExistsResult) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[29]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // CommandResult represents the result of a command
@@ -1214,11 +1093,7 @@ func (x *CommandResult) String() string {
 func (*CommandResult) ProtoMessage() {}
 
 func (x *CommandResult) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[30]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // CreateServerRequest represents a request to create a server
@@ -1243,11 +1118,7 @@ func (x *CreateServerRequest) String() string {
 func (*CreateServerRequest) ProtoMessage() {}
 
 func (x *CreateServerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[31]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // CreateServerResponse represents the response from creating a server
@@ -1272,11 +1143,7 @@ func (x *CreateServerResponse) String() string {
 func (*CreateServerResponse) ProtoMessage() {}
 
 func (x *CreateServerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[32]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // DeleteServerRequest represents a request to delete a server
@@ -1299,11 +1166,7 @@ func (x *DeleteServerRequest) String() string {
 func (*DeleteServerRequest) ProtoMessage() {}
 
 func (x *DeleteServerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[33]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // DeleteServerResponse represents the response from deleting a server
@@ -1327,11 +1190,7 @@ func (x *DeleteServerResponse) String() string {
 func (*DeleteServerResponse) ProtoMessage() {}
 
 func (x *DeleteServerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[34]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // StartServerRequest represents a request to start a server
@@ -1354,11 +1213,7 @@ func (x *StartServerRequest) String() string {
 func (*StartServerRequest) ProtoMessage() {}
 
 func (x *StartServerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[35]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // StartServerResponse represents the response from starting a server
@@ -1382,11 +1237,7 @@ func (x *StartServerResponse) String() string {
 func (*StartServerResponse) ProtoMessage() {}
 
 func (x *StartServerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[36]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // StopServerRequest represents a request to stop a server
@@ -1409,11 +1260,7 @@ func (x *StopServerRequest) String() string {
 func (*StopServerRequest) ProtoMessage() {}
 
 func (x *StopServerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[37]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // StopServerResponse represents the response from stopping a server
@@ -1437,11 +1284,7 @@ func (x *StopServerResponse) String() string {
 func (*StopServerResponse) ProtoMessage() {}
 
 func (x *StopServerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[38]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // GetServerStatusRequest represents a request to get server status
@@ -1464,11 +1307,7 @@ func (x *GetServerStatusRequest) String() string {
 func (*GetServerStatusRequest) ProtoMessage() {}
 
 func (x *GetServerStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[39]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // GetServerStatusResponse represents the response from getting server status
@@ -1491,11 +1330,7 @@ func (x *GetServerStatusResponse) String() string {
 func (*GetServerStatusResponse) ProtoMessage() {}
 
 func (x *GetServerStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[40]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // StreamMetricsRequest represents a request to stream metrics
@@ -1519,11 +1354,7 @@ func (x *StreamMetricsRequest) String() string {
 func (*StreamMetricsRequest) ProtoMessage() {}
 
 func (x *StreamMetricsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[41]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
 
 // NodeMetrics represents node metrics
@@ -1549,16 +1380,5 @@ func (x *NodeMetrics) String() string {
 func (*NodeMetrics) ProtoMessage() {}
 
 func (x *NodeMetrics) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[42]
-	if x == nil {
-		return nil
-	}
-	return mi.MessageOf(x)
+	return protoimpl.X.MessageOf(x)
 }
-
-// File type references for protobuf implementation
-var file_controller_proto_msgTypes = make([]protoimpl.MessageInfo, 43)
-
-var _ = protoreflect.Name("")
-var _ (*FileInfo)
-var _ = sync.Mutex{}

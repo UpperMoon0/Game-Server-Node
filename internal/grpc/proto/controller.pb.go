@@ -9,7 +9,6 @@ package proto
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	reflect "reflect"
 	sync "sync"
 )
 
@@ -613,5 +612,5 @@ type NodeMetrics struct {
 
 // File type references for protobuf implementation
 var _ = protoreflect.Name("")
-var _ = reflect.TypeFor[*FileInfo]()
+var _ (*FileInfo)
 var _ = sync.Mutex{}

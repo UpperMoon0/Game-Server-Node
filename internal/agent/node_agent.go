@@ -74,13 +74,15 @@ func (a *Agent) Stop(ctx context.Context) error {
 func (a *Agent) registerWithController(ctx context.Context) error {
 	// Get node information
 	nodeInfo := &pb.NodeInfo{
-		NodeId:     a.cfg.NodeID,
-		Hostname:    getHostname(),
-		IpAddress:  getIPAddress(),
-		Resources:  a.getNodeResources(),
-		GameTypes:  []string{"minecraft", "valheim", "terraria", "factorio"}, // TODO: Auto-detect
-		OsVersion:  runtime.GOOS + " " + runtime.GOARCH,
+		NodeId:       a.cfg.NodeID,
+		Hostname:     getHostname(),
+		IpAddress:    getIPAddress(),
+		Resources:    a.getNodeResources(),
+		GameTypes:    []string{"minecraft", "valheim", "terraria", "factorio"}, // TODO: Auto-detect
+		OsVersion:    runtime.GOOS + " " + runtime.GOARCH,
 		AgentVersion: "1.0.0",
+		Initialized:  a.processMgr.IsInitialized(),
+		GameType:     a.processMgr.GetGameType(),
 	}
 
 	a.nodeInfo = nodeInfo
@@ -93,7 +95,8 @@ func (a *Agent) registerWithController(ctx context.Context) error {
 
 	a.logger.Info("Node registered with controller",
 		zap.String("controller_id", response.ControllerId),
-		zap.Int64("heartbeat_interval", response.HeartbeatIntervalSeconds))
+		zap.Int64("heartbeat_interval", response.HeartbeatIntervalSeconds),
+		zap.Bool("initialized", nodeInfo.Initialized))
 
 	return nil
 }
@@ -179,6 +182,14 @@ func (a *Agent) handleInitializeNode(ctx context.Context, stream *client.EventSt
 		return
 	}
 
+	// Check if already initialized
+	if a.processMgr.IsInitialized() {
+		a.logger.Warn("Node is already initialized, skipping initialization",
+			zap.String("game_type", a.processMgr.GetGameType()))
+		a.sendCommandResult(stream, cmd.CommandId, false, "Node is already initialized")
+		return
+	}
+
 	// Send initializing event
 	stream.Send(&pb.NodeEvent{
 		NodeId:    a.cfg.NodeID,
@@ -188,6 +199,11 @@ func (a *Agent) handleInitializeNode(ctx context.Context, stream *client.EventSt
 
 	// Initialize the node (install dependencies based on game type)
 	if err := a.processMgr.Initialize(ctx, initCmd.GameType); err != nil {
+		if err == process.ErrAlreadyInitialized {
+			a.logger.Warn("Node is already initialized", zap.String("game_type", initCmd.GameType))
+			a.sendCommandResult(stream, cmd.CommandId, false, "Node is already initialized")
+			return
+		}
 		a.sendCommandResult(stream, cmd.CommandId, false, err.Error())
 		return
 	}

@@ -122,6 +122,8 @@ type NodeInfo struct {
 	GameTypes       []string        `json:"gameTypes"`
 	OsVersion       string          `json:"osVersion"`
 	AgentVersion    string          `json:"agentVersion"`
+	Initialized     bool            `json:"initialized"`
+	GameType        string          `json:"gameType"`
 }
 
 // NodeResources represents resources available on a node

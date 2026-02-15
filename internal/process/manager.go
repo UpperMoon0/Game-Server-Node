@@ -2,6 +2,7 @@ package process
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -13,14 +14,22 @@ import (
 	"go.uber.org/zap"
 )
 
+// NodeState represents the persistent state of the node
+type NodeState struct {
+	Initialized bool   `json:"initialized"`
+	GameType    string `json:"game_type"`
+}
+
 // Manager manages game server processes and node state
 type Manager struct {
-	cfg        *config.Config
-	logger     *zap.Logger
-	servers    map[string]*ServerProcess
-	nodeStatus NodeStatus
-	gameType   string
-	mu         sync.RWMutex
+	cfg         *config.Config
+	logger      *zap.Logger
+	servers     map[string]*ServerProcess
+	nodeStatus  NodeStatus
+	gameType    string
+	initialized bool
+	stateFile   string
+	mu          sync.RWMutex
 }
 
 // ServerProcess represents a running game server process
@@ -50,10 +59,10 @@ type ServerConfig struct {
 type NodeStatus string
 
 const (
-	NodeStatusStopped     NodeStatus = "stopped"     // Default state, node created but not initialized
-	NodeStatusInstalling  NodeStatus = "installing"  // Node is installing dependencies (JDK, etc.)
-	NodeStatusRunning     NodeStatus = "running"     // Node is running and ready to host game servers
-	NodeStatusError       NodeStatus = "error"      // Node encountered an error
+	NodeStatusStopped    NodeStatus = "stopped"    // Default state, node created but not initialized
+	NodeStatusInstalling NodeStatus = "installing" // Node is installing dependencies (JDK, etc.)
+	NodeStatusRunning    NodeStatus = "running"    // Node is running and ready to host game servers
+	NodeStatusError      NodeStatus = "error"      // Node encountered an error
 )
 
 // ServerStatus represents the status of a game server
@@ -89,12 +98,70 @@ func NewManager(cfg *config.Config, logger *zap.Logger) (*Manager, error) {
 		return nil, fmt.Errorf("failed to create backup directory: %w", err)
 	}
 
-	return &Manager{
-		cfg:        cfg,
-		logger:     logger,
-		servers:    make(map[string]*ServerProcess),
-		nodeStatus: NodeStatusStopped, // Default state
-	}, nil
+	// Create data directory for state file
+	dataDir := filepath.Join(cfg.ServerDirectory, ".state")
+	if err := os.MkdirAll(dataDir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create state directory: %w", err)
+	}
+
+	m := &Manager{
+		cfg:       cfg,
+		logger:    logger,
+		servers:   make(map[string]*ServerProcess),
+		stateFile: filepath.Join(dataDir, "node_state.json"),
+	}
+
+	// Load persisted state
+	if err := m.loadState(); err != nil {
+		logger.Warn("Failed to load node state, starting fresh", zap.Error(err))
+	}
+
+	return m, nil
+}
+
+// loadState loads the persisted node state from disk
+func (m *Manager) loadState() error {
+	data, err := os.ReadFile(m.stateFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// No state file exists, start fresh
+			return nil
+		}
+		return fmt.Errorf("failed to read state file: %w", err)
+	}
+
+	var state NodeState
+	if err := json.Unmarshal(data, &state); err != nil {
+		return fmt.Errorf("failed to parse state file: %w", err)
+	}
+
+	m.initialized = state.Initialized
+	m.gameType = state.GameType
+
+	m.logger.Info("Loaded node state from disk",
+		zap.Bool("initialized", state.Initialized),
+		zap.String("game_type", state.GameType))
+
+	return nil
+}
+
+// saveState saves the node state to disk
+func (m *Manager) saveState() error {
+	state := NodeState{
+		Initialized: m.initialized,
+		GameType:    m.gameType,
+	}
+
+	data, err := json.MarshalIndent(state, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal state: %w", err)
+	}
+
+	if err := os.WriteFile(m.stateFile, data, 0644); err != nil {
+		return fmt.Errorf("failed to write state file: %w", err)
+	}
+
+	return nil
 }
 
 // GetNodeStatus returns the current node status
@@ -111,9 +178,29 @@ func (m *Manager) GetGameType() string {
 	return m.gameType
 }
 
+// IsInitialized returns whether the node has been initialized
+func (m *Manager) IsInitialized() bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.initialized
+}
+
 // Initialize initializes the node environment based on game type
 // This installs dependencies like JDK for Minecraft, etc.
+// Returns ErrAlreadyInitialized if the node is already initialized
+var ErrAlreadyInitialized = fmt.Errorf("node is already initialized")
+
 func (m *Manager) Initialize(ctx context.Context, gameType string) error {
+	// Check if already initialized
+	m.mu.RLock()
+	if m.initialized {
+		m.mu.RUnlock()
+		m.logger.Warn("Node is already initialized, skipping initialization",
+			zap.String("game_type", m.gameType))
+		return ErrAlreadyInitialized
+	}
+	m.mu.RUnlock()
+
 	m.mu.Lock()
 	m.nodeStatus = NodeStatusInstalling
 	m.gameType = gameType
@@ -144,10 +231,17 @@ func (m *Manager) Initialize(ctx context.Context, gameType string) error {
 			zap.String("game_type", gameType))
 	}
 
-	// Set status to running
+	// Set status to running and mark as initialized
 	m.mu.Lock()
 	m.nodeStatus = NodeStatusRunning
+	m.initialized = true
 	m.mu.Unlock()
+
+	// Save state to disk
+	if err := m.saveState(); err != nil {
+		m.logger.Error("Failed to save node state", zap.Error(err))
+		// Don't fail the initialization, just log the error
+	}
 
 	m.logger.Info("Node initialized successfully",
 		zap.String("game_type", gameType),

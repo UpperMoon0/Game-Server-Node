@@ -10,12 +10,14 @@ const (
 	EventType_EVENT_TYPE_NODE_ONLINE        EventType = 1
 	EventType_EVENT_TYPE_NODE_OFFLINE       EventType = 2
 	EventType_EVENT_TYPE_HEARTBEAT          EventType = 3
-	EventType_EVENT_TYPE_SERVER_CREATED     EventType = 4
-	EventType_EVENT_TYPE_SERVER_STARTED     EventType = 5
-	EventType_EVENT_TYPE_SERVER_STOPPED     EventType = 6
-	EventType_EVENT_TYPE_SERVER_RESTARTED   EventType = 7
-	EventType_EVENT_TYPE_SERVER_DELETED     EventType = 8
-	EventType_EVENT_TYPE_METRICS_REPORT     EventType = 9
+	EventType_EVENT_TYPE_NODE_INITIALIZING  EventType = 4
+	EventType_EVENT_TYPE_NODE_READY         EventType = 5
+	EventType_EVENT_TYPE_SERVER_CREATED     EventType = 6
+	EventType_EVENT_TYPE_SERVER_STARTED     EventType = 7
+	EventType_EVENT_TYPE_SERVER_STOPPED     EventType = 8
+	EventType_EVENT_TYPE_SERVER_RESTARTED   EventType = 9
+	EventType_EVENT_TYPE_SERVER_DELETED     EventType = 10
+	EventType_EVENT_TYPE_METRICS_REPORT     EventType = 11
 )
 
 func (e EventType) String() string {
@@ -26,6 +28,10 @@ func (e EventType) String() string {
 		return "NODE_OFFLINE"
 	case EventType_EVENT_TYPE_HEARTBEAT:
 		return "HEARTBEAT"
+	case EventType_EVENT_TYPE_NODE_INITIALIZING:
+		return "NODE_INITIALIZING"
+	case EventType_EVENT_TYPE_NODE_READY:
+		return "NODE_READY"
 	case EventType_EVENT_TYPE_SERVER_CREATED:
 		return "SERVER_CREATED"
 	case EventType_EVENT_TYPE_SERVER_STARTED:
@@ -48,16 +54,19 @@ type CommandType int32
 
 const (
 	CommandType_COMMAND_TYPE_UNSPECIFIED     CommandType = 0
-	CommandType_COMMAND_TYPE_CREATE_SERVER   CommandType = 1
-	CommandType_COMMAND_TYPE_START_SERVER    CommandType = 2
-	CommandType_COMMAND_TYPE_STOP_SERVER     CommandType = 3
-	CommandType_COMMAND_TYPE_RESTART_SERVER  CommandType = 4
-	CommandType_COMMAND_TYPE_UPDATE_SERVER   CommandType = 5
-	CommandType_COMMAND_TYPE_DELETE_SERVER   CommandType = 6
+	CommandType_COMMAND_TYPE_INITIALIZE_NODE CommandType = 1
+	CommandType_COMMAND_TYPE_CREATE_SERVER   CommandType = 2
+	CommandType_COMMAND_TYPE_START_SERVER    CommandType = 3
+	CommandType_COMMAND_TYPE_STOP_SERVER     CommandType = 4
+	CommandType_COMMAND_TYPE_RESTART_SERVER  CommandType = 5
+	CommandType_COMMAND_TYPE_UPDATE_SERVER   CommandType = 6
+	CommandType_COMMAND_TYPE_DELETE_SERVER   CommandType = 7
 )
 
 func (c CommandType) String() string {
 	switch c {
+	case CommandType_COMMAND_TYPE_INITIALIZE_NODE:
+		return "INITIALIZE_NODE"
 	case CommandType_COMMAND_TYPE_CREATE_SERVER:
 		return "CREATE_SERVER"
 	case CommandType_COMMAND_TYPE_START_SERVER:
@@ -136,12 +145,21 @@ type NodeEvent struct {
 
 // ControllerCommand represents a command from the controller
 type ControllerCommand struct {
-	CommandId       string          `json:"commandId"`
-	Type            CommandType     `json:"type"`
+	CommandId       string           `json:"commandId"`
+	Type            CommandType      `json:"type"`
+	InitializeNode  *InitializeNodeCmd `json:"initializeNode,omitempty"`
 	CreateServer    *CreateServerCmd `json:"createServer,omitempty"`
 	StartServer     *StartServerCmd  `json:"startServer,omitempty"`
 	StopServer      *StopServerCmd   `json:"stopServer,omitempty"`
 	DeleteServer    *DeleteServerCmd `json:"deleteServer,omitempty"`
+}
+
+// GetInitializeNode returns the InitializeNode command if present
+func (c *ControllerCommand) GetInitializeNode() *InitializeNodeCmd {
+	if c != nil {
+		return c.InitializeNode
+	}
+	return nil
 }
 
 // GetCreateServer returns the CreateServer command if present
@@ -196,6 +214,11 @@ type StopServerCmd struct {
 // DeleteServerCmd contains parameters for deleting a server
 type DeleteServerCmd struct {
 	ServerId    string  `json:"serverId"`
+}
+
+// InitializeNodeCmd contains parameters for initializing a node
+type InitializeNodeCmd struct {
+	GameType    string  `json:"gameType"`
 }
 
 // ServerConfig contains configuration for a game server

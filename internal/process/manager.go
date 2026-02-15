@@ -13,12 +13,14 @@ import (
 	"go.uber.org/zap"
 )
 
-// Manager manages game server processes
+// Manager manages game server processes and node state
 type Manager struct {
-	cfg      *config.Config
-	logger   *zap.Logger
-	servers  map[string]*ServerProcess
-	mu       sync.RWMutex
+	cfg        *config.Config
+	logger     *zap.Logger
+	servers    map[string]*ServerProcess
+	nodeStatus NodeStatus
+	gameType   string
+	mu         sync.RWMutex
 }
 
 // ServerProcess represents a running game server process
@@ -44,16 +46,26 @@ type ServerConfig struct {
 	Port       int
 }
 
-// ServerStatus represents the status of a server
+// NodeStatus represents the status of a node
+type NodeStatus string
+
+const (
+	NodeStatusStopped     NodeStatus = "stopped"     // Default state, node created but not initialized
+	NodeStatusInstalling  NodeStatus = "installing"  // Node is installing dependencies (JDK, etc.)
+	NodeStatusRunning     NodeStatus = "running"     // Node is running and ready to host game servers
+	NodeStatusError       NodeStatus = "error"      // Node encountered an error
+)
+
+// ServerStatus represents the status of a game server
 type ServerStatus string
 
 const (
 	ServerStatusInstalling ServerStatus = "installing"
 	ServerStatusStopped    ServerStatus = "stopped"
 	ServerStatusRunning    ServerStatus = "running"
-	ServerStatusError     ServerStatus = "error"
-	ServerStatusStarting  ServerStatus = "starting"
-	ServerStatusStopping  ServerStatus = "stopping"
+	ServerStatusError      ServerStatus = "error"
+	ServerStatusStarting   ServerStatus = "starting"
+	ServerStatusStopping   ServerStatus = "stopping"
 )
 
 // SystemMetrics represents system metrics
@@ -78,10 +90,109 @@ func NewManager(cfg *config.Config, logger *zap.Logger) (*Manager, error) {
 	}
 
 	return &Manager{
-		cfg:     cfg,
-		logger:  logger,
-		servers: make(map[string]*ServerProcess),
+		cfg:        cfg,
+		logger:     logger,
+		servers:    make(map[string]*ServerProcess),
+		nodeStatus: NodeStatusStopped, // Default state
 	}, nil
+}
+
+// GetNodeStatus returns the current node status
+func (m *Manager) GetNodeStatus() NodeStatus {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.nodeStatus
+}
+
+// GetGameType returns the node's game type
+func (m *Manager) GetGameType() string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.gameType
+}
+
+// Initialize initializes the node environment based on game type
+// This installs dependencies like JDK for Minecraft, etc.
+func (m *Manager) Initialize(ctx context.Context, gameType string) error {
+	m.mu.Lock()
+	m.nodeStatus = NodeStatusInstalling
+	m.gameType = gameType
+	m.mu.Unlock()
+
+	m.logger.Info("Initializing node",
+		zap.String("game_type", gameType))
+
+	// Install dependencies based on game type
+	switch gameType {
+	case "minecraft", "minecraft-java":
+		if err := m.installMinecraftDeps(ctx); err != nil {
+			m.mu.Lock()
+			m.nodeStatus = NodeStatusError
+			m.mu.Unlock()
+			return fmt.Errorf("failed to install Minecraft dependencies: %w", err)
+		}
+	case "valheim":
+		if err := m.installValheimDeps(ctx); err != nil {
+			m.mu.Lock()
+			m.nodeStatus = NodeStatusError
+			m.mu.Unlock()
+			return fmt.Errorf("failed to install Valheim dependencies: %w", err)
+		}
+	default:
+		// For unknown game types, just mark as running
+		m.logger.Info("Unknown game type, skipping dependency installation",
+			zap.String("game_type", gameType))
+	}
+
+	// Set status to running
+	m.mu.Lock()
+	m.nodeStatus = NodeStatusRunning
+	m.mu.Unlock()
+
+	m.logger.Info("Node initialized successfully",
+		zap.String("game_type", gameType),
+		zap.String("status", string(NodeStatusRunning)))
+
+	return nil
+}
+
+// installMinecraftDeps installs Java JDK for Minecraft servers
+func (m *Manager) installMinecraftDeps(ctx context.Context) error {
+	m.logger.Info("Installing Minecraft dependencies (JDK 21)")
+
+	// Check if Java is already installed
+	if _, err := exec.LookPath("java"); err == nil {
+		m.logger.Info("Java is already installed, checking version")
+		// Could check version here
+		return nil
+	}
+
+	// Install OpenJDK 21 (using apt-get for Debian/Ubuntu based containers)
+	cmd := exec.CommandContext(ctx, "apt-get", "update")
+	if output, err := cmd.CombinedOutput(); err != nil {
+		m.logger.Warn("apt-get update failed, continuing anyway",
+			zap.Error(err),
+			zap.String("output", string(output)))
+	}
+
+	cmd = exec.CommandContext(ctx, "apt-get", "install", "-y", "openjdk-21-jre-headless")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to install JDK 21: %w, output: %s", err, string(output))
+	}
+
+	m.logger.Info("JDK 21 installed successfully")
+	return nil
+}
+
+// installValheimDeps installs dependencies for Valheim server
+func (m *Manager) installValheimDeps(ctx context.Context) error {
+	m.logger.Info("Installing Valheim dependencies")
+
+	// Valheim requires some 32-bit libraries and other deps
+	// This is a placeholder - actual implementation would install steamcmd, etc.
+	
+	return nil
 }
 
 // CreateServer creates a new game server

@@ -152,6 +152,8 @@ func (a *Agent) handleCommand(ctx context.Context, stream *client.EventStream, c
 		zap.String("command_type", cmd.Type.String()))
 
 	switch cmd.Type {
+	case pb.CommandType_COMMAND_TYPE_INITIALIZE_NODE:
+		a.handleInitializeNode(ctx, stream, cmd)
 	case pb.CommandType_COMMAND_TYPE_CREATE_SERVER:
 		a.handleCreateServer(ctx, stream, cmd)
 	case pb.CommandType_COMMAND_TYPE_START_SERVER:
@@ -167,6 +169,37 @@ func (a *Agent) handleCommand(ctx context.Context, stream *client.EventStream, c
 	default:
 		a.logger.Warn("Unknown command type", zap.String("type", cmd.Type.String()))
 	}
+}
+
+// handleInitializeNode handles node initialization
+func (a *Agent) handleInitializeNode(ctx context.Context, stream *client.EventStream, cmd *pb.ControllerCommand) {
+	initCmd := cmd.GetInitializeNode()
+	if initCmd == nil {
+		a.sendCommandResult(stream, cmd.CommandId, false, "Invalid initialize command")
+		return
+	}
+
+	// Send initializing event
+	stream.Send(&pb.NodeEvent{
+		NodeId:    a.cfg.NodeID,
+		Type:      pb.EventType_EVENT_TYPE_NODE_INITIALIZING,
+		Timestamp: time.Now().Unix(),
+	})
+
+	// Initialize the node (install dependencies based on game type)
+	if err := a.processMgr.Initialize(ctx, initCmd.GameType); err != nil {
+		a.sendCommandResult(stream, cmd.CommandId, false, err.Error())
+		return
+	}
+
+	// Send ready event
+	stream.Send(&pb.NodeEvent{
+		NodeId:    a.cfg.NodeID,
+		Type:      pb.EventType_EVENT_TYPE_NODE_READY,
+		Timestamp: time.Now().Unix(),
+	})
+
+	a.sendCommandResult(stream, cmd.CommandId, true, "")
 }
 
 // handleCreateServer handles server creation

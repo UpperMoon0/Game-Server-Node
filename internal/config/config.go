@@ -26,6 +26,7 @@ type Config struct {
 	DefaultMaxPlayers  int    `mapstructure:"DEFAULT_MAX_PLAYERS"`
 	BackupDirectory    string `mapstructure:"BACKUP_DIRECTORY"`
 	DataPath           string `mapstructure:"DATA_PATH"`
+	GameTypes          string `mapstructure:"GAME_TYPES"`
 
 	// Resources
 	TotalCPUCores    int   `mapstructure:"TOTAL_CPU_CORES"`
@@ -92,6 +93,9 @@ func Load(configPath string) (*Config, error) {
 	}
 	if controllerAddr := os.Getenv("CONTROLLER_ADDRESS"); controllerAddr != "" {
 		cfg.ControllerAddress = controllerAddr
+	}
+	if gameTypes := os.Getenv("GAME_TYPES"); gameTypes != "" {
+		cfg.GameTypes = gameTypes
 	}
 
 	// Auto-detect resources if not set

@@ -124,6 +124,6 @@ jobs:
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ steps.kv.outputs.GH_PAT }}
-          repository: UpperMoon0/Game-Server
+          repository: UpperMoon0/Game-Server-Node
           event-type: node-pushed
           client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}", "image_tag": "${{ env.IMAGE_TAG }}"}'

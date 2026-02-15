@@ -13,14 +13,14 @@ import (
 
 // Client represents a gRPC client for communicating with the controller
 type Client struct {
-	conn    *grpc.ClientConn
-	client  pb.NodeServiceClient
-	logger  *zap.Logger
+	conn   *grpc.ClientConn
+	client pb.NodeServiceClient
+	logger *zap.Logger
 }
 
 // EventStream represents a bidirectional event stream
 type EventStream struct {
-	stream  pb.NodeService_StreamEventsClient
+	stream pb.NodeService_StreamEventsClient
 }
 
 // NewClient creates a new gRPC client
@@ -50,17 +50,23 @@ func (c *Client) Close() {
 }
 
 // RegisterNode registers the node with the controller
-func (c *Client) RegisterNode(ctx context.Context, nodeInfo *pb.NodeInfo) (*pb.RegisterNodeResponse, error) {
+func (c *Client) RegisterNode(ctx context.Context, req *pb.RegisterNodeRequest) (*pb.RegisterNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	resp, err := c.client.RegisterNode(ctx, nodeInfo)
+	resp, err := c.client.RegisterNode(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to register node: %w", err)
 	}
 
-	c.logger.Info("Successfully registered with controller",
-		zap.String("controller_id", resp.ControllerId))
+	if resp == nil {
+		return nil, fmt.Errorf("received nil response from controller")
+	}
+
+	if c.logger != nil {
+		c.logger.Info("Successfully registered with controller",
+			zap.String("controller_id", resp.ControllerId))
+	}
 
 	return resp, nil
 }

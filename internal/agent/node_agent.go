@@ -17,12 +17,12 @@ import (
 
 // Agent represents the node agent that manages game servers
 type Agent struct {
-	cfg          *config.Config
-	processMgr   *process.Manager
-	fileMgr      *files.Manager
-	grpcClient   *client.Client
-	logger       *zap.Logger
-	nodeInfo     *pb.NodeInfo
+	cfg        *config.Config
+	processMgr *process.Manager
+	fileMgr    *files.Manager
+	grpcClient *client.Client
+	logger     *zap.Logger
+	nodeInfo   *pb.RegisterNodeRequest
 }
 
 // NewAgent creates a new node agent
@@ -77,16 +77,16 @@ func (a *Agent) Stop(ctx context.Context) error {
 // registerWithController registers the node with the controller
 func (a *Agent) registerWithController(ctx context.Context) error {
 	// Get node information
-	nodeInfo := &pb.NodeInfo{
-		NodeId:       a.cfg.NodeID,
-		Hostname:     getHostname(),
-		IpAddress:    getIPAddress(),
-		Resources:    a.getNodeResources(),
-		GameTypes:    []string{"minecraft", "valheim", "terraria", "factorio"}, // TODO: Auto-detect
-		OsVersion:    runtime.GOOS + " " + runtime.GOARCH,
-		AgentVersion: "1.0.0",
-		Initialized:  a.processMgr.IsInitialized(),
-		GameType:     a.processMgr.GetGameType(),
+	nodeInfo := &pb.RegisterNodeRequest{
+		NodeId:         a.cfg.NodeID,
+		Hostname:       getHostname(),
+		IpAddress:      getIPAddress(),
+		Resources:      a.getNodeResources(),
+		SupportedGames: []string{"minecraft", "valheim", "terraria", "factorio"}, // TODO: Auto-detect
+		OsVersion:      runtime.GOOS + " " + runtime.GOARCH,
+		AgentVersion:   "1.0.0",
+		Initialized:    a.processMgr.IsInitialized(),
+		GameType:       a.processMgr.GetGameType(),
 	}
 
 	a.nodeInfo = nodeInfo

@@ -6,18 +6,20 @@ package proto
 type EventType int32
 
 const (
-	EventType_EVENT_TYPE_UNSPECIFIED        EventType = 0
-	EventType_EVENT_TYPE_NODE_ONLINE        EventType = 1
-	EventType_EVENT_TYPE_NODE_OFFLINE       EventType = 2
-	EventType_EVENT_TYPE_HEARTBEAT          EventType = 3
-	EventType_EVENT_TYPE_NODE_INITIALIZING  EventType = 4
-	EventType_EVENT_TYPE_NODE_READY         EventType = 5
-	EventType_EVENT_TYPE_SERVER_CREATED     EventType = 6
-	EventType_EVENT_TYPE_SERVER_STARTED     EventType = 7
-	EventType_EVENT_TYPE_SERVER_STOPPED     EventType = 8
-	EventType_EVENT_TYPE_SERVER_RESTARTED   EventType = 9
-	EventType_EVENT_TYPE_SERVER_DELETED     EventType = 10
-	EventType_EVENT_TYPE_METRICS_REPORT     EventType = 11
+	EventType_EVENT_TYPE_UNSPECIFIED           EventType = 0
+	EventType_EVENT_TYPE_NODE_ONLINE           EventType = 1
+	EventType_EVENT_TYPE_NODE_OFFLINE          EventType = 2
+	EventType_EVENT_TYPE_HEARTBEAT             EventType = 3
+	EventType_EVENT_TYPE_NODE_INITIALIZING     EventType = 4
+	EventType_EVENT_TYPE_NODE_READY            EventType = 5
+	EventType_EVENT_TYPE_SERVER_CREATED        EventType = 6
+	EventType_EVENT_TYPE_SERVER_STARTED        EventType = 7
+	EventType_EVENT_TYPE_SERVER_STOPPED        EventType = 8
+	EventType_EVENT_TYPE_SERVER_RESTARTED      EventType = 9
+	EventType_EVENT_TYPE_SERVER_DELETED        EventType = 10
+	EventType_EVENT_TYPE_METRICS_REPORT        EventType = 11
+	EventType_EVENT_TYPE_FILE_OPERATION_RESULT EventType = 12
+	EventType_EVENT_TYPE_COMMAND_RESULT        EventType = 13
 )
 
 func (e EventType) String() string {
@@ -44,6 +46,10 @@ func (e EventType) String() string {
 		return "SERVER_DELETED"
 	case EventType_EVENT_TYPE_METRICS_REPORT:
 		return "METRICS_REPORT"
+	case EventType_EVENT_TYPE_FILE_OPERATION_RESULT:
+		return "FILE_OPERATION_RESULT"
+	case EventType_EVENT_TYPE_COMMAND_RESULT:
+		return "COMMAND_RESULT"
 	default:
 		return "UNSPECIFIED"
 	}
@@ -59,8 +65,19 @@ const (
 	CommandType_COMMAND_TYPE_START_SERVER    CommandType = 3
 	CommandType_COMMAND_TYPE_STOP_SERVER     CommandType = 4
 	CommandType_COMMAND_TYPE_RESTART_SERVER  CommandType = 5
-	CommandType_COMMAND_TYPE_UPDATE_SERVER   CommandType = 6
-	CommandType_COMMAND_TYPE_DELETE_SERVER   CommandType = 7
+	CommandType_COMMAND_TYPE_DELETE_SERVER   CommandType = 6
+	CommandType_COMMAND_TYPE_FILE_LIST       CommandType = 10
+	CommandType_COMMAND_TYPE_FILE_CREATE     CommandType = 11
+	CommandType_COMMAND_TYPE_FILE_DELETE     CommandType = 12
+	CommandType_COMMAND_TYPE_FILE_RENAME     CommandType = 13
+	CommandType_COMMAND_TYPE_FILE_MOVE       CommandType = 14
+	CommandType_COMMAND_TYPE_FILE_COPY       CommandType = 15
+	CommandType_COMMAND_TYPE_FILE_WRITE      CommandType = 16
+	CommandType_COMMAND_TYPE_FILE_READ       CommandType = 17
+	CommandType_COMMAND_TYPE_FILE_ZIP        CommandType = 18
+	CommandType_COMMAND_TYPE_FILE_UNZIP      CommandType = 19
+	CommandType_COMMAND_TYPE_FILE_EXISTS     CommandType = 20
+	CommandType_COMMAND_TYPE_FILE_MKDIR      CommandType = 21
 )
 
 func (c CommandType) String() string {
@@ -75,10 +92,32 @@ func (c CommandType) String() string {
 		return "STOP_SERVER"
 	case CommandType_COMMAND_TYPE_RESTART_SERVER:
 		return "RESTART_SERVER"
-	case CommandType_COMMAND_TYPE_UPDATE_SERVER:
-		return "UPDATE_SERVER"
 	case CommandType_COMMAND_TYPE_DELETE_SERVER:
 		return "DELETE_SERVER"
+	case CommandType_COMMAND_TYPE_FILE_LIST:
+		return "FILE_LIST"
+	case CommandType_COMMAND_TYPE_FILE_CREATE:
+		return "FILE_CREATE"
+	case CommandType_COMMAND_TYPE_FILE_DELETE:
+		return "FILE_DELETE"
+	case CommandType_COMMAND_TYPE_FILE_RENAME:
+		return "FILE_RENAME"
+	case CommandType_COMMAND_TYPE_FILE_MOVE:
+		return "FILE_MOVE"
+	case CommandType_COMMAND_TYPE_FILE_COPY:
+		return "FILE_COPY"
+	case CommandType_COMMAND_TYPE_FILE_WRITE:
+		return "FILE_WRITE"
+	case CommandType_COMMAND_TYPE_FILE_READ:
+		return "FILE_READ"
+	case CommandType_COMMAND_TYPE_FILE_ZIP:
+		return "FILE_ZIP"
+	case CommandType_COMMAND_TYPE_FILE_UNZIP:
+		return "FILE_UNZIP"
+	case CommandType_COMMAND_TYPE_FILE_EXISTS:
+		return "FILE_EXISTS"
+	case CommandType_COMMAND_TYPE_FILE_MKDIR:
+		return "FILE_MKDIR"
 	default:
 		return "UNSPECIFIED"
 	}
@@ -90,10 +129,10 @@ type ServerState int32
 const (
 	ServerState_SERVER_STATE_UNSPECIFIED ServerState = 0
 	ServerState_SERVER_STATE_STOPPED     ServerState = 1
-	ServerState_SERVER_STATE_RUNNING    ServerState = 2
-	ServerState_SERVER_STATE_STARTING   ServerState = 3
-	ServerState_SERVER_STATE_STOPPING  ServerState = 4
-	ServerState_SERVER_STATE_ERROR      ServerState = 5
+	ServerState_SERVER_STATE_RUNNING     ServerState = 2
+	ServerState_SERVER_STATE_STARTING    ServerState = 3
+	ServerState_SERVER_STATE_STOPPING    ServerState = 4
+	ServerState_SERVER_STATE_ERROR       ServerState = 5
 )
 
 func (s ServerState) String() string {
@@ -115,45 +154,59 @@ func (s ServerState) String() string {
 
 // NodeInfo represents information about a node
 type NodeInfo struct {
-	NodeId          string          `json:"nodeId"`
-	Hostname        string          `json:"hostname"`
-	IpAddress       string          `json:"ipAddress"`
-	Resources       *NodeResources  `json:"resources"`
-	GameTypes       []string        `json:"gameTypes"`
-	OsVersion       string          `json:"osVersion"`
-	AgentVersion    string          `json:"agentVersion"`
-	Initialized     bool            `json:"initialized"`
-	GameType        string          `json:"gameType"`
+	NodeId         string         `json:"nodeId"`
+	Hostname       string         `json:"hostname"`
+	IpAddress      string         `json:"ipAddress"`
+	Resources      *NodeResources `json:"resources"`
+	GameTypes      []string       `json:"gameTypes"`
+	OsVersion      string         `json:"osVersion"`
+	AgentVersion   string         `json:"agentVersion"`
+	Initialized    bool           `json:"initialized"`
+	GameType       string         `json:"gameType"`
 }
 
 // NodeResources represents resources available on a node
 type NodeResources struct {
-	TotalCpuCores        int32   `json:"totalCpuCores"`
-	TotalMemoryMb        int64   `json:"totalMemoryMb"`
-	TotalStorageMb       int64   `json:"totalStorageMb"`
-	AvailableCpuCores   int32   `json:"availableCpuCores"`
-	AvailableMemoryMb   int64   `json:"availableMemoryMb"`
-	AvailableStorageMb  int64   `json:"availableStorageMb"`
+	TotalCpuCores       int32 `json:"totalCpuCores"`
+	TotalMemoryMb       int64 `json:"totalMemoryMb"`
+	TotalStorageMb      int64 `json:"totalStorageMb"`
+	AvailableCpuCores   int32 `json:"availableCpuCores"`
+	AvailableMemoryMb   int64 `json:"availableMemoryMb"`
+	AvailableStorageMb  int64 `json:"availableStorageMb"`
 }
 
 // NodeEvent represents an event from a node
 type NodeEvent struct {
-	NodeId          string          `json:"nodeId"`
-	Type            EventType       `json:"type"`
-	Timestamp       int64           `json:"timestamp"`
-	ServerStatus    *ServerStatus   `json:"serverStatus,omitempty"`
-	Metrics         *MetricsSnapshot `json:"metrics,omitempty"`
+	NodeId       string            `json:"nodeId"`
+	Type         EventType         `json:"type"`
+	Timestamp    int64             `json:"timestamp"`
+	ServerStatus *ServerStatus     `json:"serverStatus,omitempty"`
+	Metrics      *MetricsSnapshot  `json:"metrics,omitempty"`
+	FileResult   *FileOpResult     `json:"fileResult,omitempty"`
+	CmdResult    *CommandResult    `json:"cmdResult,omitempty"`
 }
 
 // ControllerCommand represents a command from the controller
 type ControllerCommand struct {
-	CommandId       string           `json:"commandId"`
-	Type            CommandType      `json:"type"`
-	InitializeNode  *InitializeNodeCmd `json:"initializeNode,omitempty"`
-	CreateServer    *CreateServerCmd `json:"createServer,omitempty"`
-	StartServer     *StartServerCmd  `json:"startServer,omitempty"`
-	StopServer      *StopServerCmd   `json:"stopServer,omitempty"`
-	DeleteServer    *DeleteServerCmd `json:"deleteServer,omitempty"`
+	CommandId      string              `json:"commandId"`
+	Type           CommandType         `json:"type"`
+	InitializeNode *InitializeNodeCmd  `json:"initializeNode,omitempty"`
+	CreateServer   *CreateServerCmd    `json:"createServer,omitempty"`
+	StartServer    *StartServerCmd     `json:"startServer,omitempty"`
+	StopServer     *StopServerCmd      `json:"stopServer,omitempty"`
+	DeleteServer   *DeleteServerCmd    `json:"deleteServer,omitempty"`
+	FileList       *FileListCmd        `json:"fileList,omitempty"`
+	FileCreate     *FileCreateCmd      `json:"fileCreate,omitempty"`
+	FileDelete     *FileDeleteCmd      `json:"fileDelete,omitempty"`
+	FileRename     *FileRenameCmd      `json:"fileRename,omitempty"`
+	FileMove       *FileMoveCmd        `json:"fileMove,omitempty"`
+	FileCopy       *FileCopyCmd        `json:"fileCopy,omitempty"`
+	FileWrite      *FileWriteCmd       `json:"fileWrite,omitempty"`
+	FileRead       *FileReadCmd        `json:"fileRead,omitempty"`
+	FileZip        *FileZipCmd         `json:"fileZip,omitempty"`
+	FileUnzip      *FileUnzipCmd       `json:"fileUnzip,omitempty"`
+	FileExists     *FileExistsCmd      `json:"fileExists,omitempty"`
+	FileMkdir      *FileMkdirCmd       `json:"fileMkdir,omitempty"`
 }
 
 // GetInitializeNode returns the InitializeNode command if present
@@ -196,57 +249,278 @@ func (c *ControllerCommand) GetDeleteServer() *DeleteServerCmd {
 	return nil
 }
 
+// GetFileList returns the FileList command if present
+func (c *ControllerCommand) GetFileList() *FileListCmd {
+	if c != nil {
+		return c.FileList
+	}
+	return nil
+}
+
+// GetFileCreate returns the FileCreate command if present
+func (c *ControllerCommand) GetFileCreate() *FileCreateCmd {
+	if c != nil {
+		return c.FileCreate
+	}
+	return nil
+}
+
+// GetFileDelete returns the FileDelete command if present
+func (c *ControllerCommand) GetFileDelete() *FileDeleteCmd {
+	if c != nil {
+		return c.FileDelete
+	}
+	return nil
+}
+
+// GetFileRename returns the FileRename command if present
+func (c *ControllerCommand) GetFileRename() *FileRenameCmd {
+	if c != nil {
+		return c.FileRename
+	}
+	return nil
+}
+
+// GetFileMove returns the FileMove command if present
+func (c *ControllerCommand) GetFileMove() *FileMoveCmd {
+	if c != nil {
+		return c.FileMove
+	}
+	return nil
+}
+
+// GetFileCopy returns the FileCopy command if present
+func (c *ControllerCommand) GetFileCopy() *FileCopyCmd {
+	if c != nil {
+		return c.FileCopy
+	}
+	return nil
+}
+
+// GetFileWrite returns the FileWrite command if present
+func (c *ControllerCommand) GetFileWrite() *FileWriteCmd {
+	if c != nil {
+		return c.FileWrite
+	}
+	return nil
+}
+
+// GetFileRead returns the FileRead command if present
+func (c *ControllerCommand) GetFileRead() *FileReadCmd {
+	if c != nil {
+		return c.FileRead
+	}
+	return nil
+}
+
+// GetFileZip returns the FileZip command if present
+func (c *ControllerCommand) GetFileZip() *FileZipCmd {
+	if c != nil {
+		return c.FileZip
+	}
+	return nil
+}
+
+// GetFileUnzip returns the FileUnzip command if present
+func (c *ControllerCommand) GetFileUnzip() *FileUnzipCmd {
+	if c != nil {
+		return c.FileUnzip
+	}
+	return nil
+}
+
+// GetFileExists returns the FileExists command if present
+func (c *ControllerCommand) GetFileExists() *FileExistsCmd {
+	if c != nil {
+		return c.FileExists
+	}
+	return nil
+}
+
+// GetFileMkdir returns the FileMkdir command if present
+func (c *ControllerCommand) GetFileMkdir() *FileMkdirCmd {
+	if c != nil {
+		return c.FileMkdir
+	}
+	return nil
+}
+
+// File Commands
+
+// FileListCmd contains parameters for listing files
+type FileListCmd struct {
+	Path      string `json:"path"`
+	Recursive bool   `json:"recursive"`
+}
+
+// FileCreateCmd contains parameters for creating a file
+type FileCreateCmd struct {
+	Path       string `json:"path"`
+	IsDirectory bool   `json:"isDirectory"`
+}
+
+// FileDeleteCmd contains parameters for deleting a file
+type FileDeleteCmd struct {
+	Path      string `json:"path"`
+	Recursive bool   `json:"recursive"`
+}
+
+// FileRenameCmd contains parameters for renaming a file
+type FileRenameCmd struct {
+	OldPath string `json:"oldPath"`
+	NewPath string `json:"newPath"`
+}
+
+// FileMoveCmd contains parameters for moving a file
+type FileMoveCmd struct {
+	SourcePath string `json:"sourcePath"`
+	DestPath   string `json:"destPath"`
+}
+
+// FileCopyCmd contains parameters for copying a file
+type FileCopyCmd struct {
+	SourcePath string `json:"sourcePath"`
+	DestPath   string `json:"destPath"`
+	Recursive  bool   `json:"recursive"`
+}
+
+// FileWriteCmd contains parameters for writing a file
+type FileWriteCmd struct {
+	Path    string `json:"path"`
+	Content []byte `json:"content"`
+	Append  bool   `json:"append"`
+}
+
+// FileReadCmd contains parameters for reading a file
+type FileReadCmd struct {
+	Path   string `json:"path"`
+	Offset int64  `json:"offset"`
+	Length int64  `json:"length"`
+}
+
+// FileZipCmd contains parameters for zipping files
+type FileZipCmd struct {
+	SourcePath string `json:"sourcePath"`
+	DestPath   string `json:"destPath"`
+	Recursive  bool   `json:"recursive"`
+}
+
+// FileUnzipCmd contains parameters for unzipping files
+type FileUnzipCmd struct {
+	SourcePath string `json:"sourcePath"`
+	DestPath   string `json:"destPath"`
+}
+
+// FileExistsCmd contains parameters for checking file existence
+type FileExistsCmd struct {
+	Path string `json:"path"`
+}
+
+// FileMkdirCmd contains parameters for creating a directory
+type FileMkdirCmd struct {
+	Path    string `json:"path"`
+	Parents bool   `json:"parents"`
+}
+
+// FileInfo represents information about a file
+type FileInfo struct {
+	Name         string `json:"name"`
+	Path         string `json:"path"`
+	IsDirectory  bool   `json:"isDirectory"`
+	Size         int64  `json:"size"`
+	ModifiedTime int64  `json:"modifiedTime"`
+	CreatedTime  int64  `json:"createdTime"`
+	Permissions  string `json:"permissions"`
+}
+
+// FileOpResult represents the result of a file operation
+type FileOpResult struct {
+	CommandId string          `json:"commandId"`
+	Success   bool            `json:"success"`
+	Error     string          `json:"error"`
+	ListResult *FileListResult `json:"listResult,omitempty"`
+	ReadResult *FileReadResult `json:"readResult,omitempty"`
+	ExistsResult *FileExistsResult `json:"existsResult,omitempty"`
+}
+
+// FileListResult contains the result of a file list operation
+type FileListResult struct {
+	Files       []*FileInfo `json:"files"`
+	CurrentPath string      `json:"currentPath"`
+}
+
+// FileReadResult contains the result of a file read operation
+type FileReadResult struct {
+	Content   []byte `json:"content"`
+	TotalSize int64  `json:"totalSize"`
+}
+
+// FileExistsResult contains the result of a file exists check
+type FileExistsResult struct {
+	Exists      bool `json:"exists"`
+	IsDirectory bool `json:"isDirectory"`
+}
+
+// CommandResult represents the result of a command
+type CommandResult struct {
+	CommandId string `json:"commandId"`
+	Success   bool   `json:"success"`
+	Message   string `json:"message"`
+}
+
+// Server Commands
+
 // CreateServerCmd contains parameters for creating a server
 type CreateServerCmd struct {
-	ServerId    string          `json:"serverId"`
-	GameType    string          `json:"gameType"`
-	Config      *ServerConfig   `json:"config"`
+	ServerId string       `json:"serverId"`
+	GameType string       `json:"gameType"`
+	Config   *ServerConfig `json:"config"`
 }
 
 // StartServerCmd contains parameters for starting a server
 type StartServerCmd struct {
-	ServerId    string  `json:"serverId"`
+	ServerId string `json:"serverId"`
 }
 
 // StopServerCmd contains parameters for stopping a server
 type StopServerCmd struct {
-	ServerId    string  `json:"serverId"`
+	ServerId string `json:"serverId"`
 }
 
 // DeleteServerCmd contains parameters for deleting a server
 type DeleteServerCmd struct {
-	ServerId    string  `json:"serverId"`
+	ServerId string `json:"serverId"`
 }
 
 // InitializeNodeCmd contains parameters for initializing a node
 type InitializeNodeCmd struct {
-	GameType    string  `json:"gameType"`
+	GameType string `json:"gameType"`
 }
 
 // ServerConfig contains configuration for a game server
 type ServerConfig struct {
-	Version     string            `json:"version"`
-	Settings    map[string]string `json:"settings"`
-	MaxPlayers  int32             `json:"maxPlayers"`
+	Version    string            `json:"version"`
+	Settings   map[string]string `json:"settings"`
+	MaxPlayers int32             `json:"maxPlayers"`
 }
 
 // ServerStatus represents the status of a game server
 type ServerStatus struct {
-	ServerId      string      `json:"serverId"`
-	State         ServerState `json:"state"`
+	ServerId string      `json:"serverId"`
+	State    ServerState `json:"state"`
 }
 
 // MetricsSnapshot represents a snapshot of node metrics
 type MetricsSnapshot struct {
-	NodeId              string  `json:"nodeId"`
-	CpuUsagePercent     float32 `json:"cpuUsagePercent"`
-	MemoryUsagePercent  float32 `json:"memoryUsagePercent"`
-	Timestamp           int64   `json:"timestamp"`
+	NodeId             string  `json:"nodeId"`
+	CpuUsagePercent    float32 `json:"cpuUsagePercent"`
+	MemoryUsagePercent float32 `json:"memoryUsagePercent"`
+	Timestamp          int64   `json:"timestamp"`
 }
 
 // RegisterNodeResponse represents the response from registering a node
 type RegisterNodeResponse struct {
-	ControllerId           string  `json:"controllerId"`
+	ControllerId             string `json:"controllerId"`
 	HeartbeatIntervalSeconds int64  `json:"heartbeatIntervalSeconds"`
 }
 

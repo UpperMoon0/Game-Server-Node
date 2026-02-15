@@ -1,0 +1,360 @@
+syntax = "proto3";
+
+package controller;
+
+option go_package = "github.com/game-server/node/internal/grpc/proto";
+
+// Node Service - Handles node registration and communication
+service NodeService {
+    // Register a new node with the controller
+    rpc RegisterNode(RegisterNodeRequest) returns (RegisterNodeResponse);
+    
+    // Establish bidirectional streaming for events and commands
+    rpc StreamEvents(stream NodeEvent) returns (stream ControllerCommand);
+}
+
+// Server Service - Handles game server lifecycle management
+service ServerService {
+    // Create a new game server on a node
+    rpc CreateServer(CreateServerRequest) returns (CreateServerResponse);
+    
+    // Delete a server
+    rpc DeleteServer(DeleteServerRequest) returns (DeleteServerResponse);
+    
+    // Start a server
+    rpc StartServer(StartServerRequest) returns (StartServerResponse);
+    
+    // Stop a server
+    rpc StopServer(StopServerRequest) returns (StopServerResponse);
+    
+    // Get server current status
+    rpc GetServerStatus(GetServerStatusRequest) returns (GetServerStatusResponse);
+}
+
+// Metrics Service - Handles real-time metrics collection
+service MetricsService {
+    // Stream node and server metrics
+    rpc StreamMetrics(StreamMetricsRequest) returns (stream NodeMetrics);
+}
+
+// Message Definitions
+
+message RegisterNodeRequest {
+    string node_id = 1;
+    string hostname = 2;
+    string ip_address = 3;
+    NodeResources resources = 4;
+    repeated string supported_games = 5;
+    string os_version = 6;
+    string agent_version = 7;
+    bool initialized = 8;
+    string game_type = 9;
+}
+
+message RegisterNodeResponse {
+    string controller_id = 1;
+    int64 heartbeat_interval_seconds = 2;
+}
+
+message NodeEvent {
+    string node_id = 1;
+    EventType type = 2;
+    int64 timestamp = 3;
+    oneof payload {
+        ServerStatus server_status = 4;
+        MetricsSnapshot metrics = 5;
+        FileOperationResult file_result = 6;
+        CommandResult command_result = 7;
+    }
+}
+
+enum EventType {
+    EVENT_TYPE_UNSPECIFIED = 0;
+    EVENT_TYPE_NODE_ONLINE = 1;
+    EVENT_TYPE_NODE_OFFLINE = 2;
+    EVENT_TYPE_HEARTBEAT = 3;
+    EVENT_TYPE_NODE_INITIALIZING = 4;
+    EVENT_TYPE_NODE_READY = 5;
+    EVENT_TYPE_SERVER_CREATED = 6;
+    EVENT_TYPE_SERVER_STARTED = 7;
+    EVENT_TYPE_SERVER_STOPPED = 8;
+    EVENT_TYPE_SERVER_RESTARTED = 9;
+    EVENT_TYPE_SERVER_DELETED = 10;
+    EVENT_TYPE_METRICS_REPORT = 11;
+    EVENT_TYPE_FILE_OPERATION_RESULT = 12;
+    EVENT_TYPE_COMMAND_RESULT = 13;
+}
+
+message ControllerCommand {
+    string command_id = 1;
+    CommandType type = 2;
+    int64 timestamp = 3;
+    oneof payload {
+        InitializeNodeCommand initialize_node = 4;
+        CreateServerCommand create_server = 5;
+        StartServerCommand start_server = 6;
+        StopServerCommand stop_server = 7;
+        DeleteServerCommand delete_server = 8;
+        FileListCommand file_list = 10;
+        FileCreateCommand file_create = 11;
+        FileDeleteCommand file_delete = 12;
+        FileRenameCommand file_rename = 13;
+        FileMoveCommand file_move = 14;
+        FileCopyCommand file_copy = 15;
+        FileWriteCommand file_write = 16;
+        FileReadCommand file_read = 17;
+        FileZipCommand file_zip = 18;
+        FileUnzipCommand file_unzip = 19;
+        FileExistsCommand file_exists = 20;
+        FileMkdirCommand file_mkdir = 21;
+    }
+}
+
+enum CommandType {
+    COMMAND_TYPE_UNSPECIFIED = 0;
+    COMMAND_TYPE_INITIALIZE_NODE = 1;
+    COMMAND_TYPE_CREATE_SERVER = 2;
+    COMMAND_TYPE_START_SERVER = 3;
+    COMMAND_TYPE_STOP_SERVER = 4;
+    COMMAND_TYPE_RESTART_SERVER = 5;
+    COMMAND_TYPE_DELETE_SERVER = 6;
+    COMMAND_TYPE_FILE_LIST = 10;
+    COMMAND_TYPE_FILE_CREATE = 11;
+    COMMAND_TYPE_FILE_DELETE = 12;
+    COMMAND_TYPE_FILE_RENAME = 13;
+    COMMAND_TYPE_FILE_MOVE = 14;
+    COMMAND_TYPE_FILE_COPY = 15;
+    COMMAND_TYPE_FILE_WRITE = 16;
+    COMMAND_TYPE_FILE_READ = 17;
+    COMMAND_TYPE_FILE_ZIP = 18;
+    COMMAND_TYPE_FILE_UNZIP = 19;
+    COMMAND_TYPE_FILE_EXISTS = 20;
+    COMMAND_TYPE_FILE_MKDIR = 21;
+}
+
+message InitializeNodeCommand {
+    string game_type = 1;
+}
+
+message CreateServerCommand {
+    string server_id = 1;
+    string game_type = 2;
+    ServerConfig config = 3;
+}
+
+message StartServerCommand {
+    string server_id = 1;
+}
+
+message StopServerCommand {
+    string server_id = 1;
+}
+
+message DeleteServerCommand {
+    string server_id = 1;
+}
+
+// File Operations
+
+message FileInfo {
+    string name = 1;
+    string path = 2;
+    bool is_directory = 3;
+    int64 size = 4;
+    int64 modified_time = 5;
+    int64 created_time = 6;
+    string permissions = 7;
+}
+
+message FileListCommand {
+    string path = 1;
+    bool recursive = 2;
+}
+
+message FileCreateCommand {
+    string path = 1;
+    bool is_directory = 2;
+}
+
+message FileDeleteCommand {
+    string path = 1;
+    bool recursive = 2;
+}
+
+message FileRenameCommand {
+    string old_path = 1;
+    string new_path = 2;
+}
+
+message FileMoveCommand {
+    string source_path = 1;
+    string dest_path = 2;
+}
+
+message FileCopyCommand {
+    string source_path = 1;
+    string dest_path = 2;
+    bool recursive = 3;
+}
+
+message FileWriteCommand {
+    string path = 1;
+    bytes content = 2;
+    bool append = 3;
+}
+
+message FileReadCommand {
+    string path = 1;
+    int64 offset = 2;
+    int64 length = 3;
+}
+
+message FileZipCommand {
+    string source_path = 1;
+    string dest_path = 2;
+    bool recursive = 3;
+}
+
+message FileUnzipCommand {
+    string source_path = 1;
+    string dest_path = 2;
+}
+
+message FileExistsCommand {
+    string path = 1;
+}
+
+message FileMkdirCommand {
+    string path = 1;
+    bool parents = 2;
+}
+
+message FileOperationResult {
+    string command_id = 1;
+    bool success = 2;
+    string error = 3;
+    oneof result {
+        FileListResult list_result = 4;
+        FileReadResult read_result = 5;
+        FileExistsResult exists_result = 6;
+    }
+}
+
+message FileListResult {
+    repeated FileInfo files = 1;
+    string current_path = 2;
+}
+
+message FileReadResult {
+    bytes content = 1;
+    int64 total_size = 2;
+}
+
+message FileExistsResult {
+    bool exists = 1;
+    bool is_directory = 2;
+}
+
+message CommandResult {
+    string command_id = 1;
+    bool success = 2;
+    string message = 3;
+}
+
+message ServerConfig {
+    string name = 1;
+    string version = 2;
+    map<string, string> settings = 3;
+    int32 max_players = 4;
+}
+
+message NodeResources {
+    int32 total_cpu_cores = 1;
+    int64 total_memory_mb = 2;
+    int64 total_storage_mb = 3;
+    int32 available_cpu_cores = 4;
+    int64 available_memory_mb = 5;
+    int64 available_storage_mb = 6;
+}
+
+message ServerStatus {
+    string server_id = 1;
+    ServerState state = 2;
+}
+
+enum ServerState {
+    SERVER_STATE_UNSPECIFIED = 0;
+    SERVER_STATE_STOPPED = 1;
+    SERVER_STATE_RUNNING = 2;
+    SERVER_STATE_STARTING = 3;
+    SERVER_STATE_STOPPING = 4;
+    SERVER_STATE_ERROR = 5;
+}
+
+message MetricsSnapshot {
+    string node_id = 1;
+    float cpu_usage_percent = 2;
+    float memory_usage_percent = 3;
+    int64 timestamp = 4;
+}
+
+// Request/Response Messages
+
+message CreateServerRequest {
+    string node_id = 1;
+    string game_type = 2;
+    ServerConfig config = 3;
+}
+
+message CreateServerResponse {
+    bool success = 1;
+    string server_id = 2;
+    string message = 3;
+}
+
+message DeleteServerRequest {
+    string server_id = 1;
+}
+
+message DeleteServerResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message StartServerRequest {
+    string server_id = 1;
+}
+
+message StartServerResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message StopServerRequest {
+    string server_id = 1;
+}
+
+message StopServerResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message GetServerStatusRequest {
+    string server_id = 1;
+}
+
+message GetServerStatusResponse {
+    ServerStatus status = 1;
+}
+
+message StreamMetricsRequest {
+    string node_id = 1;
+    int64 interval_ms = 2;
+}
+
+message NodeMetrics {
+    string node_id = 1;
+    float cpu_usage = 2;
+    float memory_usage = 3;
+    int64 timestamp = 4;
+}

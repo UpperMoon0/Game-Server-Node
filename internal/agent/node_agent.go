@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/game-server/node/internal/config"
+	"github.com/game-server/node/internal/files"
 	"github.com/game-server/node/internal/grpc/client"
 	"github.com/game-server/node/internal/process"
 	pb "github.com/game-server/node/internal/grpc/proto"
@@ -18,6 +19,7 @@ import (
 type Agent struct {
 	cfg          *config.Config
 	processMgr   *process.Manager
+	fileMgr      *files.Manager
 	grpcClient   *client.Client
 	logger       *zap.Logger
 	nodeInfo     *pb.NodeInfo
@@ -27,12 +29,14 @@ type Agent struct {
 func NewAgent(
 	cfg *config.Config,
 	processMgr *process.Manager,
+	fileMgr *files.Manager,
 	grpcClient *client.Client,
 	logger *zap.Logger,
 ) *Agent {
 	return &Agent{
 		cfg:        cfg,
 		processMgr: processMgr,
+		fileMgr:    fileMgr,
 		grpcClient: grpcClient,
 		logger:     logger,
 	}
@@ -165,10 +169,33 @@ func (a *Agent) handleCommand(ctx context.Context, stream *client.EventStream, c
 		a.handleStopServer(ctx, stream, cmd)
 	case pb.CommandType_COMMAND_TYPE_RESTART_SERVER:
 		a.handleRestartServer(ctx, stream, cmd)
-	case pb.CommandType_COMMAND_TYPE_UPDATE_SERVER:
-		a.handleUpdateServer(ctx, stream, cmd)
 	case pb.CommandType_COMMAND_TYPE_DELETE_SERVER:
 		a.handleDeleteServer(ctx, stream, cmd)
+	// File operations
+	case pb.CommandType_COMMAND_TYPE_FILE_LIST:
+		a.handleFileList(ctx, stream, cmd)
+	case pb.CommandType_COMMAND_TYPE_FILE_CREATE:
+		a.handleFileCreate(ctx, stream, cmd)
+	case pb.CommandType_COMMAND_TYPE_FILE_DELETE:
+		a.handleFileDelete(ctx, stream, cmd)
+	case pb.CommandType_COMMAND_TYPE_FILE_RENAME:
+		a.handleFileRename(ctx, stream, cmd)
+	case pb.CommandType_COMMAND_TYPE_FILE_MOVE:
+		a.handleFileMove(ctx, stream, cmd)
+	case pb.CommandType_COMMAND_TYPE_FILE_COPY:
+		a.handleFileCopy(ctx, stream, cmd)
+	case pb.CommandType_COMMAND_TYPE_FILE_WRITE:
+		a.handleFileWrite(ctx, stream, cmd)
+	case pb.CommandType_COMMAND_TYPE_FILE_READ:
+		a.handleFileRead(ctx, stream, cmd)
+	case pb.CommandType_COMMAND_TYPE_FILE_ZIP:
+		a.handleFileZip(ctx, stream, cmd)
+	case pb.CommandType_COMMAND_TYPE_FILE_UNZIP:
+		a.handleFileUnzip(ctx, stream, cmd)
+	case pb.CommandType_COMMAND_TYPE_FILE_EXISTS:
+		a.handleFileExists(ctx, stream, cmd)
+	case pb.CommandType_COMMAND_TYPE_FILE_MKDIR:
+		a.handleFileMkdir(ctx, stream, cmd)
 	default:
 		a.logger.Warn("Unknown command type", zap.String("type", cmd.Type.String()))
 	}
@@ -337,6 +364,266 @@ func (a *Agent) handleDeleteServer(ctx context.Context, stream *client.EventStre
 	}
 
 	a.sendCommandResult(stream, cmd.CommandId, true, "")
+}
+
+// File operation handlers
+
+// handleFileList handles file list command
+func (a *Agent) handleFileList(ctx context.Context, stream *client.EventStream, cmd *pb.ControllerCommand) {
+	listCmd := cmd.GetFileList()
+	if listCmd == nil {
+		a.sendFileResult(stream, cmd.CommandId, false, "Invalid list command", nil)
+		return
+	}
+
+	files, err := a.fileMgr.ListFiles(listCmd.Path, listCmd.Recursive)
+	if err != nil {
+		a.sendFileResult(stream, cmd.CommandId, false, err.Error(), nil)
+		return
+	}
+
+	// Convert to proto FileInfo
+	protoFiles := make([]*pb.FileInfo, len(files))
+	for i, f := range files {
+		protoFiles[i] = &pb.FileInfo{
+			Name:         f.Name,
+			Path:         f.Path,
+			IsDirectory:  f.IsDirectory,
+			Size:         f.Size,
+			ModifiedTime: f.ModifiedTime,
+			CreatedTime:  f.CreatedTime,
+			Permissions:  f.Permissions,
+		}
+	}
+
+	a.sendFileResult(stream, cmd.CommandId, true, "", &pb.FileListResult{
+		Files:       protoFiles,
+		CurrentPath: listCmd.Path,
+	})
+}
+
+// handleFileCreate handles file create command
+func (a *Agent) handleFileCreate(ctx context.Context, stream *client.EventStream, cmd *pb.ControllerCommand) {
+	createCmd := cmd.GetFileCreate()
+	if createCmd == nil {
+		a.sendFileResult(stream, cmd.CommandId, false, "Invalid create command", nil)
+		return
+	}
+
+	err := a.fileMgr.CreateFile(createCmd.Path, createCmd.IsDirectory)
+	if err != nil {
+		a.sendFileResult(stream, cmd.CommandId, false, err.Error(), nil)
+		return
+	}
+
+	a.sendFileResult(stream, cmd.CommandId, true, "", nil)
+}
+
+// handleFileDelete handles file delete command
+func (a *Agent) handleFileDelete(ctx context.Context, stream *client.EventStream, cmd *pb.ControllerCommand) {
+	deleteCmd := cmd.GetFileDelete()
+	if deleteCmd == nil {
+		a.sendFileResult(stream, cmd.CommandId, false, "Invalid delete command", nil)
+		return
+	}
+
+	err := a.fileMgr.DeleteFile(deleteCmd.Path, deleteCmd.Recursive)
+	if err != nil {
+		a.sendFileResult(stream, cmd.CommandId, false, err.Error(), nil)
+		return
+	}
+
+	a.sendFileResult(stream, cmd.CommandId, true, "", nil)
+}
+
+// handleFileRename handles file rename command
+func (a *Agent) handleFileRename(ctx context.Context, stream *client.EventStream, cmd *pb.ControllerCommand) {
+	renameCmd := cmd.GetFileRename()
+	if renameCmd == nil {
+		a.sendFileResult(stream, cmd.CommandId, false, "Invalid rename command", nil)
+		return
+	}
+
+	err := a.fileMgr.RenameFile(renameCmd.OldPath, renameCmd.NewPath)
+	if err != nil {
+		a.sendFileResult(stream, cmd.CommandId, false, err.Error(), nil)
+		return
+	}
+
+	a.sendFileResult(stream, cmd.CommandId, true, "", nil)
+}
+
+// handleFileMove handles file move command
+func (a *Agent) handleFileMove(ctx context.Context, stream *client.EventStream, cmd *pb.ControllerCommand) {
+	moveCmd := cmd.GetFileMove()
+	if moveCmd == nil {
+		a.sendFileResult(stream, cmd.CommandId, false, "Invalid move command", nil)
+		return
+	}
+
+	err := a.fileMgr.MoveFile(moveCmd.SourcePath, moveCmd.DestPath)
+	if err != nil {
+		a.sendFileResult(stream, cmd.CommandId, false, err.Error(), nil)
+		return
+	}
+
+	a.sendFileResult(stream, cmd.CommandId, true, "", nil)
+}
+
+// handleFileCopy handles file copy command
+func (a *Agent) handleFileCopy(ctx context.Context, stream *client.EventStream, cmd *pb.ControllerCommand) {
+	copyCmd := cmd.GetFileCopy()
+	if copyCmd == nil {
+		a.sendFileResult(stream, cmd.CommandId, false, "Invalid copy command", nil)
+		return
+	}
+
+	err := a.fileMgr.CopyFile(copyCmd.SourcePath, copyCmd.DestPath, copyCmd.Recursive)
+	if err != nil {
+		a.sendFileResult(stream, cmd.CommandId, false, err.Error(), nil)
+		return
+	}
+
+	a.sendFileResult(stream, cmd.CommandId, true, "", nil)
+}
+
+// handleFileWrite handles file write command
+func (a *Agent) handleFileWrite(ctx context.Context, stream *client.EventStream, cmd *pb.ControllerCommand) {
+	writeCmd := cmd.GetFileWrite()
+	if writeCmd == nil {
+		a.sendFileResult(stream, cmd.CommandId, false, "Invalid write command", nil)
+		return
+	}
+
+	err := a.fileMgr.WriteFile(writeCmd.Path, writeCmd.Content, writeCmd.Append)
+	if err != nil {
+		a.sendFileResult(stream, cmd.CommandId, false, err.Error(), nil)
+		return
+	}
+
+	a.sendFileResult(stream, cmd.CommandId, true, "", nil)
+}
+
+// handleFileRead handles file read command
+func (a *Agent) handleFileRead(ctx context.Context, stream *client.EventStream, cmd *pb.ControllerCommand) {
+	readCmd := cmd.GetFileRead()
+	if readCmd == nil {
+		a.sendFileResult(stream, cmd.CommandId, false, "Invalid read command", nil)
+		return
+	}
+
+	content, totalSize, err := a.fileMgr.ReadFile(readCmd.Path, readCmd.Offset, readCmd.Length)
+	if err != nil {
+		a.sendFileResult(stream, cmd.CommandId, false, err.Error(), nil)
+		return
+	}
+
+	a.sendFileResult(stream, cmd.CommandId, true, "", &pb.FileReadResult{
+		Content:   content,
+		TotalSize: totalSize,
+	})
+}
+
+// handleFileZip handles file zip command
+func (a *Agent) handleFileZip(ctx context.Context, stream *client.EventStream, cmd *pb.ControllerCommand) {
+	zipCmd := cmd.GetFileZip()
+	if zipCmd == nil {
+		a.sendFileResult(stream, cmd.CommandId, false, "Invalid zip command", nil)
+		return
+	}
+
+	err := a.fileMgr.ZipFiles(zipCmd.SourcePath, zipCmd.DestPath, zipCmd.Recursive)
+	if err != nil {
+		a.sendFileResult(stream, cmd.CommandId, false, err.Error(), nil)
+		return
+	}
+
+	a.sendFileResult(stream, cmd.CommandId, true, "", nil)
+}
+
+// handleFileUnzip handles file unzip command
+func (a *Agent) handleFileUnzip(ctx context.Context, stream *client.EventStream, cmd *pb.ControllerCommand) {
+	unzipCmd := cmd.GetFileUnzip()
+	if unzipCmd == nil {
+		a.sendFileResult(stream, cmd.CommandId, false, "Invalid unzip command", nil)
+		return
+	}
+
+	err := a.fileMgr.UnzipFiles(unzipCmd.SourcePath, unzipCmd.DestPath)
+	if err != nil {
+		a.sendFileResult(stream, cmd.CommandId, false, err.Error(), nil)
+		return
+	}
+
+	a.sendFileResult(stream, cmd.CommandId, true, "", nil)
+}
+
+// handleFileExists handles file exists command
+func (a *Agent) handleFileExists(ctx context.Context, stream *client.EventStream, cmd *pb.ControllerCommand) {
+	existsCmd := cmd.GetFileExists()
+	if existsCmd == nil {
+		a.sendFileResult(stream, cmd.CommandId, false, "Invalid exists command", nil)
+		return
+	}
+
+	exists, isDir, err := a.fileMgr.FileExists(existsCmd.Path)
+	if err != nil {
+		a.sendFileResult(stream, cmd.CommandId, false, err.Error(), nil)
+		return
+	}
+
+	a.sendFileResult(stream, cmd.CommandId, true, "", &pb.FileExistsResult{
+		Exists:      exists,
+		IsDirectory: isDir,
+	})
+}
+
+// handleFileMkdir handles mkdir command
+func (a *Agent) handleFileMkdir(ctx context.Context, stream *client.EventStream, cmd *pb.ControllerCommand) {
+	mkdirCmd := cmd.GetFileMkdir()
+	if mkdirCmd == nil {
+		a.sendFileResult(stream, cmd.CommandId, false, "Invalid mkdir command", nil)
+		return
+	}
+
+	err := a.fileMgr.Mkdir(mkdirCmd.Path, mkdirCmd.Parents)
+	if err != nil {
+		a.sendFileResult(stream, cmd.CommandId, false, err.Error(), nil)
+		return
+	}
+
+	a.sendFileResult(stream, cmd.CommandId, true, "", nil)
+}
+
+// sendFileResult sends a file operation result to the controller
+func (a *Agent) sendFileResult(stream *client.EventStream, commandID string, success bool, errMsg string, result interface{}) {
+	fileResult := &pb.FileOpResult{
+		CommandId: commandID,
+		Success:   success,
+		Error:     errMsg,
+	}
+
+	if result != nil {
+		switch r := result.(type) {
+		case *pb.FileListResult:
+			fileResult.ListResult = r
+		case *pb.FileReadResult:
+			fileResult.ReadResult = r
+		case *pb.FileExistsResult:
+			fileResult.ExistsResult = r
+		}
+	}
+
+	event := &pb.NodeEvent{
+		NodeId:     a.cfg.NodeID,
+		Type:       pb.EventType_EVENT_TYPE_FILE_OPERATION_RESULT,
+		Timestamp:  time.Now().Unix(),
+		FileResult: fileResult,
+	}
+
+	if err := stream.Send(event); err != nil {
+		a.logger.Error("Failed to send file result", zap.Error(err))
+	}
 }
 
 // sendCommandResult sends a command result to the controller

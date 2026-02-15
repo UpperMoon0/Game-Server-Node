@@ -9,6 +9,7 @@ import (
 
 	"github.com/game-server/node/internal/agent"
 	"github.com/game-server/node/internal/config"
+	"github.com/game-server/node/internal/files"
 	"github.com/game-server/node/internal/grpc/client"
 	"github.com/game-server/node/internal/process"
 	"github.com/game-server/node/pkg/logger"
@@ -44,6 +45,10 @@ func main() {
 		log.Fatal("Failed to initialize process manager", zap.Error(err))
 	}
 
+	// Initialize file manager
+	fileMgr := files.NewManager(cfg.DataPath)
+	log.Info("File manager initialized", zap.String("base_path", cfg.DataPath))
+
 	// Initialize gRPC client
 	grpcClient, err := client.NewClient(cfg.ControllerAddress, log)
 	if err != nil {
@@ -51,7 +56,7 @@ func main() {
 	}
 
 	// Initialize agent
-	nodeAgent := agent.NewAgent(cfg, processMgr, grpcClient, log)
+	nodeAgent := agent.NewAgent(cfg, processMgr, fileMgr, grpcClient, log)
 
 	// Create context with cancellation
 	ctx, cancel := context.WithCancel(context.Background())

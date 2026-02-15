@@ -25,6 +25,7 @@ type Config struct {
 	MaxServers         int    `mapstructure:"MAX_SERVERS"`
 	DefaultMaxPlayers  int    `mapstructure:"DEFAULT_MAX_PLAYERS"`
 	BackupDirectory    string `mapstructure:"BACKUP_DIRECTORY"`
+	DataPath           string `mapstructure:"DATA_PATH"`
 
 	// Resources
 	TotalCPUCores    int   `mapstructure:"TOTAL_CPU_CORES"`
@@ -52,6 +53,7 @@ func Load(configPath string) (*Config, error) {
 	v.SetDefault("MAX_SERVERS", 10)
 	v.SetDefault("DEFAULT_MAX_PLAYERS", 32)
 	v.SetDefault("BACKUP_DIRECTORY", "./backups")
+	v.SetDefault("DATA_PATH", "./data")
 	v.SetDefault("LOG_LEVEL", "info")
 	v.SetDefault("LOG_FORMAT", "json")
 	v.SetDefault("LOG_FILE_PATH", "./logs/node.log")

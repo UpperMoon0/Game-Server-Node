@@ -628,11 +628,21 @@ func (a *Agent) sendFileResult(stream *client.EventStream, commandID string, suc
 
 // sendCommandResult sends a command result to the controller
 func (a *Agent) sendCommandResult(stream *client.EventStream, commandID string, success bool, message string) {
-	// In a real implementation, we'd send this back via the stream
-	a.logger.Info("Command result",
-		zap.String("command_id", commandID),
-		zap.Bool("success", success),
-		zap.String("message", message))
+	// Send command result back via the stream
+	event := &pb.NodeEvent{
+		NodeId:    a.cfg.NodeID,
+		Type:      pb.EventType_EVENT_TYPE_COMMAND_RESULT,
+		Timestamp: time.Now().Unix(),
+		CommandResult: &pb.CommandResult{
+			CommandId: commandID,
+			Success:   success,
+			Message:   message,
+		},
+	}
+
+	if err := stream.Send(event); err != nil {
+		a.logger.Error("Failed to send command result", zap.Error(err))
+	}
 }
 
 // sendHeartbeat sends a heartbeat event

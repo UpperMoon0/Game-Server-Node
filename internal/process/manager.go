@@ -256,20 +256,20 @@ func (m *Manager) installMinecraftDeps(ctx context.Context) error {
 
 	// Check if Java is already installed
 	if _, err := exec.LookPath("java"); err == nil {
-		m.logger.Info("Java is already installed, checking version")
-		// Could check version here
+		m.logger.Info("Java is already installed, skipping installation")
 		return nil
 	}
 
-	// Install OpenJDK 21 (using apt-get for Debian/Ubuntu based containers)
-	cmd := exec.CommandContext(ctx, "apt-get", "update")
-	if output, err := cmd.CombinedOutput(); err != nil {
+	// Run apt-get update first
+	updateCmd := exec.CommandContext(ctx, "apt-get", "update")
+	if output, err := updateCmd.CombinedOutput(); err != nil {
 		m.logger.Warn("apt-get update failed, continuing anyway",
 			zap.Error(err),
 			zap.String("output", string(output)))
 	}
 
-	cmd = exec.CommandContext(ctx, "apt-get", "install", "-y", "openjdk-21-jre-headless")
+	// Install OpenJDK 21
+	cmd := exec.CommandContext(ctx, "apt-get", "install", "-y", "openjdk-21-jre-headless")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to install JDK 21: %w, output: %s", err, string(output))

@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.21-bookworm AS builder
+FROM golang:1.24-bookworm AS builder
 
 # Install git for go mod operations
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*

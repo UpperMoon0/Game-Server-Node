@@ -11,7 +11,7 @@ import (
 	"github.com/game-server/node/internal/files"
 	"github.com/game-server/node/internal/grpc/client"
 	"github.com/game-server/node/internal/process"
-	pb "github.com/nstut/game-server-proto/gen"
+	pb "github.com/UpperMoon0/game-server-proto/gen"
 	"go.uber.org/zap"
 )
 

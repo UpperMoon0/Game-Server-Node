@@ -18,11 +18,12 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o node ./cmd/node
 # Production stage
 FROM debian:bookworm-slim
 
-# Install ca-certificates, bash, curl
+# Install ca-certificates, bash, curl, screen
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     bash \
     curl \
+    screen \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

@@ -87,14 +87,16 @@ enum EventType {
 
 message ControllerCommand {
     string command_id = 1;
-    CommandType type = 2;
-    int64 timestamp = 3;
+    string server_id = 2;
+    CommandType type = 3;
+    int64 timestamp = 4;
     oneof payload {
-        InitializeNodeCommand initialize_node = 4;
+        InitializeNodeCommand initialize_node = 22;
         CreateServerCommand create_server = 5;
-        StartServerCommand start_server = 6;
-        StopServerCommand stop_server = 7;
-        DeleteServerCommand delete_server = 8;
+        UpdateServerCommand update_server = 6;
+        DeleteServerCommand delete_server = 7;
+        StartServerCommand start_server = 8;
+        StopServerCommand stop_server = 9;
         FileListCommand file_list = 10;
         FileCreateCommand file_create = 11;
         FileDeleteCommand file_delete = 12;
@@ -114,10 +116,12 @@ enum CommandType {
     COMMAND_TYPE_UNSPECIFIED = 0;
     COMMAND_TYPE_INITIALIZE_NODE = 1;
     COMMAND_TYPE_CREATE_SERVER = 2;
-    COMMAND_TYPE_START_SERVER = 3;
-    COMMAND_TYPE_STOP_SERVER = 4;
-    COMMAND_TYPE_RESTART_SERVER = 5;
-    COMMAND_TYPE_DELETE_SERVER = 6;
+    COMMAND_TYPE_UPDATE_SERVER = 3;
+    COMMAND_TYPE_DELETE_SERVER = 4;
+    COMMAND_TYPE_START_SERVER = 5;
+    COMMAND_TYPE_STOP_SERVER = 6;
+    COMMAND_TYPE_RESTART_SERVER = 7;
+    COMMAND_TYPE_EXECUTE_COMMAND = 8;
     COMMAND_TYPE_FILE_LIST = 10;
     COMMAND_TYPE_FILE_CREATE = 11;
     COMMAND_TYPE_FILE_DELETE = 12;
@@ -140,14 +144,24 @@ message CreateServerCommand {
     string server_id = 1;
     string game_type = 2;
     ServerConfig config = 3;
+    ResourceRequirements requirements = 4;
+}
+
+message UpdateServerCommand {
+    string server_id = 1;
+    ServerConfig config = 2;
+    bool restart_required = 3;
 }
 
 message StartServerCommand {
     string server_id = 1;
+    map<string, string> environment = 2;
 }
 
 message StopServerCommand {
     string server_id = 1;
+    int32 grace_period_seconds = 2;
+    string reason = 3;
 }
 
 message DeleteServerCommand {
@@ -265,7 +279,21 @@ message ServerConfig {
     string name = 1;
     string version = 2;
     map<string, string> settings = 3;
-    int32 max_players = 4;
+    repeated string mods = 4;
+    int32 max_players = 5;
+    string world_name = 6;
+    bool online_mode = 7;
+    string query_type = 8;
+}
+
+message ResourceRequirements {
+    int32 min_cpu_cores = 1;
+    int64 min_memory_mb = 2;
+    int64 min_storage_mb = 3;
+    int32 max_cpu_cores = 4;
+    int64 max_memory_mb = 5;
+    int32 max_players = 6;
+    int32 network_bandwidth_mbps = 7;
 }
 
 message NodeResources {

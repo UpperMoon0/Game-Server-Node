@@ -273,9 +273,11 @@ func (a *Agent) handleCreateServer(ctx context.Context, stream *client.EventStre
 		NodeId:    a.cfg.NodeID,
 		Type:      pb.EventType_EVENT_TYPE_SERVER_CREATED,
 		Timestamp: time.Now().Unix(),
-		ServerStatus: &pb.ServerStatus{
-			ServerId:  serverID,
-			State:     pb.ServerState_SERVER_STATE_STOPPED,
+		Payload: &pb.NodeEvent_ServerStatus{
+			ServerStatus: &pb.ServerStatus{
+				ServerId:  serverID,
+				State:     pb.ServerState_SERVER_STATE_STOPPED,
+			},
 		},
 	})
 
@@ -301,9 +303,11 @@ func (a *Agent) handleStartServer(ctx context.Context, stream *client.EventStrea
 		NodeId:    a.cfg.NodeID,
 		Type:      pb.EventType_EVENT_TYPE_SERVER_STARTED,
 		Timestamp: time.Now().Unix(),
-		ServerStatus: &pb.ServerStatus{
-			ServerId: startCmd.ServerId,
-			State:    pb.ServerState_SERVER_STATE_RUNNING,
+		Payload: &pb.NodeEvent_ServerStatus{
+			ServerStatus: &pb.ServerStatus{
+				ServerId: startCmd.ServerId,
+				State:    pb.ServerState_SERVER_STATE_RUNNING,
+			},
 		},
 	})
 
@@ -597,7 +601,7 @@ func (a *Agent) handleFileMkdir(ctx context.Context, stream *client.EventStream,
 
 // sendFileResult sends a file operation result to the controller
 func (a *Agent) sendFileResult(stream *client.EventStream, commandID string, success bool, errMsg string, result interface{}) {
-	fileResult := &pb.FileOpResult{
+	fileResult := &pb.FileOperationResult{
 		CommandId: commandID,
 		Success:   success,
 		Error:     errMsg,
@@ -606,19 +610,19 @@ func (a *Agent) sendFileResult(stream *client.EventStream, commandID string, suc
 	if result != nil {
 		switch r := result.(type) {
 		case *pb.FileListResult:
-			fileResult.ListResult = r
+			fileResult.Result = &pb.FileOperationResult_ListResult{ListResult: r}
 		case *pb.FileReadResult:
-			fileResult.ReadResult = r
+			fileResult.Result = &pb.FileOperationResult_ReadResult{ReadResult: r}
 		case *pb.FileExistsResult:
-			fileResult.ExistsResult = r
+			fileResult.Result = &pb.FileOperationResult_ExistsResult{ExistsResult: r}
 		}
 	}
 
 	event := &pb.NodeEvent{
-		NodeId:     a.cfg.NodeID,
-		Type:       pb.EventType_EVENT_TYPE_FILE_OPERATION_RESULT,
-		Timestamp:  time.Now().Unix(),
-		FileResult: fileResult,
+		NodeId:    a.cfg.NodeID,
+		Type:      pb.EventType_EVENT_TYPE_FILE_OPERATION_RESULT,
+		Timestamp: time.Now().Unix(),
+		Payload:   &pb.NodeEvent_FileResult{FileResult: fileResult},
 	}
 
 	if err := stream.Send(event); err != nil {
@@ -633,10 +637,12 @@ func (a *Agent) sendCommandResult(stream *client.EventStream, commandID string, 
 		NodeId:    a.cfg.NodeID,
 		Type:      pb.EventType_EVENT_TYPE_COMMAND_RESULT,
 		Timestamp: time.Now().Unix(),
-		CommandResult: &pb.CommandResult{
-			CommandId: commandID,
-			Success:   success,
-			Message:   message,
+		Payload: &pb.NodeEvent_CommandResult{
+			CommandResult: &pb.CommandResult{
+				CommandId: commandID,
+				Success:   success,
+				Message:   message,
+			},
 		},
 	}
 
@@ -653,11 +659,13 @@ func (a *Agent) sendHeartbeat(ctx context.Context, stream *client.EventStream) {
 		NodeId:    a.cfg.NodeID,
 		Type:      pb.EventType_EVENT_TYPE_HEARTBEAT,
 		Timestamp: time.Now().Unix(),
-		Metrics: &pb.MetricsSnapshot{
-			NodeId:          a.cfg.NodeID,
-			CpuUsagePercent: float32(metrics.CPUUsage),
-			MemoryUsagePercent: float32(metrics.MemoryUsage),
-			Timestamp:       time.Now().Unix(),
+		Payload: &pb.NodeEvent_Metrics{
+			Metrics: &pb.MetricsSnapshot{
+				NodeId:            a.cfg.NodeID,
+				CpuUsagePercent:   float32(metrics.CPUUsage),
+				MemoryUsagePercent: float32(metrics.MemoryUsage),
+				Timestamp:         time.Now().Unix(),
+			},
 		},
 	}
 

@@ -44,13 +44,8 @@ func NewAgent(
 
 // Start starts the node agent
 func (a *Agent) Start(ctx context.Context) error {
-	// Register with controller
-	if err := a.registerWithController(ctx); err != nil {
-		return fmt.Errorf("failed to register with controller: %w", err)
-	}
-
-	// Start event stream
-	go a.handleEventStream(ctx)
+	// Start event stream with automatic reconnection
+	go a.handleEventStreamWithReconnect(ctx)
 
 	// Start metrics collector
 	go a.collectMetrics(ctx)
@@ -106,11 +101,10 @@ func (a *Agent) registerWithController(ctx context.Context) error {
 }
 
 // handleEventStream handles bidirectional event streaming with controller
-func (a *Agent) handleEventStream(ctx context.Context) {
+func (a *Agent) handleEventStream(ctx context.Context) error {
 	stream, err := a.grpcClient.StreamEvents(ctx)
 	if err != nil {
-		a.logger.Error("Failed to create event stream", zap.Error(err))
-		return
+		return fmt.Errorf("failed to create event stream: %w", err)
 	}
 
 	// Send initial online event
@@ -119,8 +113,7 @@ func (a *Agent) handleEventStream(ctx context.Context) {
 		Type:      pb.EventType_EVENT_TYPE_NODE_ONLINE,
 		Timestamp: time.Now().Unix(),
 	}); err != nil {
-		a.logger.Error("Failed to send online event", zap.Error(err))
-		return
+		return fmt.Errorf("failed to send online event: %w", err)
 	}
 
 	// Handle incoming commands and outgoing events
@@ -140,16 +133,74 @@ func (a *Agent) handleEventStream(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			return ctx.Err()
 		default:
 			cmd, err := stream.Recv()
 			if err != nil {
-				a.logger.Error("Failed to receive command", zap.Error(err))
-				return
+				return fmt.Errorf("failed to receive command: %w", err)
 			}
 			a.handleCommand(ctx, stream, cmd)
 		}
 	}
+}
+
+// handleEventStreamWithReconnect handles event streaming with automatic reconnection
+func (a *Agent) handleEventStreamWithReconnect(ctx context.Context) {
+	backoff := 1 * time.Second
+	maxBackoff := 60 * time.Second
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		// Try to reconnect gRPC client if needed
+		if a.grpcClient.NeedsReconnect() {
+			a.logger.Info("Reconnecting to controller...")
+			if err := a.grpcClient.Reconnect(); err != nil {
+				a.logger.Error("Failed to reconnect, retrying...",
+					zap.Error(err),
+					zap.Duration("backoff", backoff))
+				time.Sleep(backoff)
+				backoff = a.calculateBackoff(backoff, maxBackoff)
+				continue
+			}
+		}
+
+		// Try to register with controller
+		if err := a.registerWithController(ctx); err != nil {
+			a.logger.Error("Failed to register with controller, retrying...",
+				zap.Error(err),
+				zap.Duration("backoff", backoff))
+			time.Sleep(backoff)
+			backoff = a.calculateBackoff(backoff, maxBackoff)
+			continue
+		}
+
+		// Reset backoff on successful connection
+		backoff = 1 * time.Second
+
+		// Handle event stream
+		err := a.handleEventStream(ctx)
+		if err != nil {
+			a.logger.Error("Event stream error, reconnecting...",
+				zap.Error(err),
+				zap.Duration("backoff", backoff))
+			time.Sleep(backoff)
+			backoff = a.calculateBackoff(backoff, maxBackoff)
+		}
+	}
+}
+
+// calculateBackoff calculates the next backoff duration with exponential backoff
+func (a *Agent) calculateBackoff(current, max time.Duration) time.Duration {
+	next := current * 2
+	if next > max {
+		return max
+	}
+	return next
 }
 
 // handleCommand handles a command from the controller

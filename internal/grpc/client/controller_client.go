@@ -8,14 +8,17 @@ import (
 	pb "github.com/game-server/node/internal/grpc/proto"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
 )
 
 // Client represents a gRPC client for communicating with the controller
 type Client struct {
-	conn   *grpc.ClientConn
-	client pb.NodeServiceClient
-	logger *zap.Logger
+	conn    *grpc.ClientConn
+	client  pb.NodeServiceClient
+	logger  *zap.Logger
+	address string
 }
 
 // EventStream represents a bidirectional event stream
@@ -26,8 +29,16 @@ type EventStream struct {
 // NewClient creates a new gRPC client
 func NewClient(address string, logger *zap.Logger) (*Client, error) {
 	// Create connection with insecure credentials (use TLS in production)
+	// Use keepalive to detect dead connections
+	keepaliveParams := keepalive.ClientParameters{
+		Time:                10 * time.Second, // Send keepalive ping every 10s
+		Timeout:             5 * time.Second,  // Wait 5s for response
+		PermitWithoutStream: true,             // Send pings even without active streams
+	}
+
 	conn, err := grpc.Dial(address,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithKeepaliveParams(keepaliveParams),
 		grpc.WithBlock(),
 		grpc.WithTimeout(10*time.Second),
 	)
@@ -36,10 +47,38 @@ func NewClient(address string, logger *zap.Logger) (*Client, error) {
 	}
 
 	return &Client{
-		conn:   conn,
-		client: pb.NewNodeServiceClient(conn),
-		logger: logger,
+		conn:    conn,
+		client:  pb.NewNodeServiceClient(conn),
+		logger:  logger,
+		address: address,
 	}, nil
+}
+
+// Reconnect closes the existing connection and creates a new one
+func (c *Client) Reconnect() error {
+	if c.conn != nil {
+		c.conn.Close()
+	}
+
+	keepaliveParams := keepalive.ClientParameters{
+		Time:                10 * time.Second,
+		Timeout:             5 * time.Second,
+		PermitWithoutStream: true,
+	}
+
+	conn, err := grpc.Dial(c.address,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithKeepaliveParams(keepaliveParams),
+		grpc.WithBlock(),
+		grpc.WithTimeout(10*time.Second),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to reconnect to controller: %w", err)
+	}
+
+	c.conn = conn
+	c.client = pb.NewNodeServiceClient(conn)
+	return nil
 }
 
 // Close closes the gRPC connection
@@ -103,4 +142,14 @@ func (c *Client) GetServerService() pb.ServerServiceClient {
 // GetMetricsService returns a metrics service client
 func (c *Client) GetMetricsService() pb.MetricsServiceClient {
 	return pb.NewMetricsServiceClient(c.conn)
+}
+
+// NeedsReconnect checks if the connection needs to be reestablished
+func (c *Client) NeedsReconnect() bool {
+	if c.conn == nil {
+		return true
+	}
+	// Check if connection is in a valid state
+	state := c.conn.GetState()
+	return state == connectivity.Shutdown || state == connectivity.TransientFailure
 }

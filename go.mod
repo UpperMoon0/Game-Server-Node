@@ -1,6 +1,6 @@
 module github.com/game-server/node
 
-go 1.24.0
+go 1.21
 
 require (
 	github.com/spf13/viper v1.18.1

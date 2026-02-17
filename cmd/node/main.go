@@ -11,6 +11,7 @@ import (
 	"github.com/game-server/node/internal/config"
 	"github.com/game-server/node/internal/files"
 	"github.com/game-server/node/internal/grpc/client"
+	_ "github.com/game-server/node/internal/grpc/codec" // Register JSON codec
 	"github.com/game-server/node/internal/process"
 	"github.com/game-server/node/pkg/logger"
 	"go.uber.org/zap"

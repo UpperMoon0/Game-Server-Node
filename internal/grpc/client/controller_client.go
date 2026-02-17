@@ -139,11 +139,6 @@ func (c *Client) GetServerService() pb.ServerServiceClient {
 	return pb.NewServerServiceClient(c.conn)
 }
 
-// GetMetricsService returns a metrics service client
-func (c *Client) GetMetricsService() pb.MetricsServiceClient {
-	return pb.NewMetricsServiceClient(c.conn)
-}
-
 // NeedsReconnect checks if the connection needs to be reestablished
 func (c *Client) NeedsReconnect() bool {
 	if c.conn == nil {

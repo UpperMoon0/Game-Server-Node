@@ -14,10 +14,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Checkout proto module
-        uses: actions/checkout@v4
-        with:
-          repository: UpperMoon0/Game-Server-Proto
-          path: ../Game-Server-Proto
+        run: |
+          cd ..
+          git clone https://github.com/UpperMoon0/Game-Server-Proto.git
 
       - name: Check required files
         run: |

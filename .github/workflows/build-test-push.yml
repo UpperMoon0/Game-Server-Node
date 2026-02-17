@@ -13,11 +13,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Checkout proto module
-        run: |
-          cd ..
-          git clone https://github.com/UpperMoon0/Game-Server-Proto.git
-
       - name: Check required files
         run: |
           if ls *.go 2>/dev/null || find . -name "*.go" -type f | grep -q .; then

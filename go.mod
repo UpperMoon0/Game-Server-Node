@@ -2,11 +2,8 @@ module github.com/game-server/node
 
 go 1.24.0
 
-// Use local proto module for development
-replace github.com/UpperMoon0/game-server-proto => ../Game-Server-Proto
-
 require (
-	github.com/UpperMoon0/game-server-proto v0.0.0-latest
+	github.com/UpperMoon0/game-server-proto v0
 	github.com/spf13/viper v1.18.1
 	go.uber.org/zap v1.26.0
 	google.golang.org/grpc v1.79.1

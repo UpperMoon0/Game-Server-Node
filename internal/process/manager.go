@@ -58,23 +58,35 @@ type ServerConfig struct {
 // NodeStatus represents the status of a node
 type NodeStatus string
 
+// Node status constants
 const (
-	NodeStatusStopped    NodeStatus = "stopped"    // Default state, node created but not initialized
-	NodeStatusInstalling NodeStatus = "installing" // Node is installing dependencies (JDK, etc.)
-	NodeStatusRunning    NodeStatus = "running"    // Node is running and ready to host game servers
-	NodeStatusError      NodeStatus = "error"      // Node encountered an error
+	// NodeStatusStopped indicates the node is created but not initialized
+	NodeStatusStopped NodeStatus = "stopped"
+	// NodeStatusInstalling indicates the node is installing dependencies (JDK, etc.)
+	NodeStatusInstalling NodeStatus = "installing"
+	// NodeStatusRunning indicates the node is running and ready to host game servers
+	NodeStatusRunning NodeStatus = "running"
+	// NodeStatusError indicates the node encountered an error
+	NodeStatusError NodeStatus = "error"
 )
 
 // ServerStatus represents the status of a game server
 type ServerStatus string
 
+// Server status constants
 const (
+	// ServerStatusInstalling indicates the server is being installed
 	ServerStatusInstalling ServerStatus = "installing"
-	ServerStatusStopped    ServerStatus = "stopped"
-	ServerStatusRunning    ServerStatus = "running"
-	ServerStatusError      ServerStatus = "error"
-	ServerStatusStarting   ServerStatus = "starting"
-	ServerStatusStopping   ServerStatus = "stopping"
+	// ServerStatusStopped indicates the server is stopped
+	ServerStatusStopped ServerStatus = "stopped"
+	// ServerStatusRunning indicates the server is running
+	ServerStatusRunning ServerStatus = "running"
+	// ServerStatusError indicates the server encountered an error
+	ServerStatusError ServerStatus = "error"
+	// ServerStatusStarting indicates the server is starting
+	ServerStatusStarting ServerStatus = "starting"
+	// ServerStatusStopping indicates the server is stopping
+	ServerStatusStopping ServerStatus = "stopping"
 )
 
 // SystemMetrics represents system metrics
@@ -185,11 +197,12 @@ func (m *Manager) IsInitialized() bool {
 	return m.initialized
 }
 
-// Initialize initializes the node environment based on game type
-// This installs dependencies like JDK for Minecraft, etc.
-// Returns ErrAlreadyInitialized if the node is already initialized
+// ErrAlreadyInitialized is returned when attempting to initialize an already initialized node
 var ErrAlreadyInitialized = fmt.Errorf("node is already initialized")
 
+// Initialize initializes the node environment based on game type.
+// This installs dependencies like JDK for Minecraft, etc.
+// Returns ErrAlreadyInitialized if the node is already initialized.
 func (m *Manager) Initialize(ctx context.Context, gameType string) error {
 	// Check if already initialized
 	m.mu.RLock()
